@@ -3,9 +3,13 @@ package org.teinelund.tools.c2plantuml;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Main class
@@ -27,6 +31,9 @@ public class Application {
     @Parameter(names = { "-h", "--help" }, help = true, order = 52)
     private boolean help = false;
 
+    Path inputPath;
+    Path outputPath;
+
     public static void main(String[] args) {
         Application application = new Application();
 
@@ -45,7 +52,7 @@ public class Application {
         }
     }
 
-    public void execute(String[] args, JCommander jc) {
+    public void execute(String[] args, JCommander jc) throws IOException {
         if (help || version) {
             if (help) {
                 jc.usage();
@@ -61,9 +68,37 @@ public class Application {
         printVerbose("Verbose mode on.");
 
         verifyParameters();
+
+        Collection<Path> paths = fetchCFiles();
+
+    }
+
+    Collection<Path> fetchCFiles() throws IOException {
+        printVerbose("Fetch C Files.");
+        Collection<Path> paths = new LinkedList<>();
+        try (Stream<Path> entries = Files.walk(inputPath)) {
+            entries.forEach( p -> {
+                if (Files.isRegularFile(p)) {
+                    if (p.toString().endsWith(".h") || p.toString().endsWith(".c")) {
+                        paths.add(p);
+                    }
+                }
+            });
+        }
+
+        // Verbose output
+        printVerbose("Fetched " + paths.size() + " of paths.");
+        if (verbose) {
+            for (Path path : paths) {
+                System.out.println("> " + path.toString());
+            }
+        }
+
+        return paths;
     }
 
     void verifyParameters() {
+        printVerbose("Verify Parameters.");
         if (Objects.isNull(input) || input.isBlank()) {
             printError("Parameter --input is mandatory.");
             System.exit(1);
@@ -73,7 +108,7 @@ public class Application {
             System.exit(1);
         }
 
-        Path inputPath = Path.of(input);
+        inputPath = Path.of(input);
         if (Files.notExists(inputPath)) {
             printError("Input path '" + input + "' does not exist. Check spelling.");
             System.exit(1);
@@ -83,7 +118,7 @@ public class Application {
             System.exit(1);
         }
 
-        Path outputPath = Path.of(output);
+        outputPath = Path.of(output);
         if (Files.exists(outputPath)) {
             printError("Output path '" + output + "' does exist. Check it.");
             System.exit(1);
