@@ -4,11 +4,18 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -33,6 +40,8 @@ public class Application {
 
     Path inputPath;
     Path outputPath;
+    Collection<Path> paths;
+    Collection<CHeaderFile> cHeaderFiles = new ArrayList<>();
 
     public static void main(String[] args) {
         Application application = new Application();
@@ -69,8 +78,52 @@ public class Application {
 
         verifyParameters();
 
-        Collection<Path> paths = fetchCFiles();
+        paths = fetchCFiles();
 
+        parsePaths();
+
+    }
+
+    void parsePaths() throws IOException {
+        Map<String, CSourceFile> cFileEntityMap = new HashMap<>();
+        for (Path path : paths) {
+            parsePath(path);
+        }
+    }
+
+    void parsePath(Path path) throws IOException {
+        Path fileName = path.getFileName();
+        String FileNameName = fileName.toString();
+        List<String> sourceLines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
+        if (FileNameName.endsWith(".h")) {
+            cHeaderFiles.add(parseHeaderFile(sourceLines));
+        }
+        else {
+            parseSourceFile(sourceLines, FileNameName);
+        }
+    }
+
+    void parseSourceFile(List<String> sourceLines, String fileName) {
+    }
+
+    private Pattern includePattern = Pattern.compile("^\\s*#include \"(.+)\"\\s*$");
+    private Pattern methodDeclarationPattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+\\*?([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
+
+    CHeaderFile parseHeaderFile(List<String> sourceLines) {
+        CHeaderFile cHeaderFile = new CHeaderFile();
+        for (String line : sourceLines) {
+            Matcher matcher = includePattern.matcher(line);
+            if ( matcher.matches() ) {
+                String includeHeaderFile = matcher.group(1);
+                cHeaderFile.addIncludeHeaderFile(includeHeaderFile);
+            }
+            matcher = methodDeclarationPattern.matcher(line);
+            if ( matcher.matches() ) {
+                String methodName = matcher.group(1);
+                cHeaderFile.addMethodDeclaration(methodName);
+            }
+        }
+        return cHeaderFile;
     }
 
     Collection<Path> fetchCFiles() throws IOException {
