@@ -1,13 +1,28 @@
 package org.teinelund.tools.c2plantuml;
 
-import java.nio.file.Path;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class CSourceFile {
 
-    private String headerFileName;
-    private Path headerFilePath;
-    private Path sourceFilePath;
-    private Map<String, CMethodImplementation> methods;
+    List<String> includeHeaderFiles = new ArrayList<>();
+    List<CMethodDeclaration> methodDeclarations = new ArrayList<>();
 
+    public void addIncludeHeaderFile(String includeHeaderFile) {
+        includeHeaderFiles.add(includeHeaderFile);
+    }
+
+    public List<String> getIncludeHeaderFiles() {
+        return Collections.unmodifiableList(includeHeaderFiles);
+    }
+
+    public void addMethodDeclaration(String methodName) {
+        CMethodDeclaration methodDeclaration = new CMethodDeclaration(methodName);
+        methodDeclarations.add(methodDeclaration);
+    }
+
+    public List<CMethodDeclaration> getMethodDeclarations() {
+        return Collections.unmodifiableList(methodDeclarations);
+    }
 }

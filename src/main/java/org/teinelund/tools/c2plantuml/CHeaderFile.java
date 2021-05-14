@@ -3,7 +3,6 @@ package org.teinelund.tools.c2plantuml;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class CHeaderFile {
 

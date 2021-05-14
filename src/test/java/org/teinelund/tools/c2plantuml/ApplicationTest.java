@@ -60,24 +60,10 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainOneMethodDeclaration() {
+    void parseHeaderFileWhereFileContainsMethodDeclarationsWithSimpleReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
-                "int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction);");
-        // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
-        // Verify
-        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
-
-        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
-        assertThat(result.getMethodDeclarations().size()).isEqualTo(1);
-        assertThat(result.getMethodDeclarations().get(0).getName()).isEqualTo("insn_size");
-    }
-
-    @Test
-    void parseHeaderFileWhereFileContainThreeMethodDeclaration() {
-        // Initialize
-        List<String> cHeaderFilecontent = List.of(
+                "int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction);",
                 "int64_t assemble(int32_t segment, int64_t offset, int bits, insn *instruction);",
                 "bool process_directives(char *);",
                 "void process_pragma(char *);");
@@ -87,10 +73,114 @@ public class ApplicationTest {
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
         assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
+        assertThat(result.getMethodDeclarations().size()).isEqualTo(4);
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("insn_size"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("assemble"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("process_directives"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("process_pragma"))).isTrue();
+    }
+
+    @Test
+    void parseHeaderFileWhereFileContainsMethodDeclarationsWithPointerReturnType() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "char * MD5End(MD5_CTX *, char *);",
+                "void **colln(Collection * c, int index);");
+        // Test
+        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
+        assertThat(result.getMethodDeclarations().size()).isEqualTo(2);
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("MD5End"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("colln"))).isTrue();
+    }
+
+    @Test
+    void parseHeaderFileWhereFileContainsMethodDeclarationsWithConstExternReturnType() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "const char *src_set_fname(const char *newname);",
+                "extern char * externMD5End(MD5_CTX *, char *);",
+                "extern unsigned int ilog2_32(uint32_t v);",
+                "extern void   MD5Init(MD5_CTX *context);",
+                "extern const char *nasm_comment(void);"
+        );
+        // Test
+        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
+        assertThat(result.getMethodDeclarations().size()).isEqualTo(5);
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("src_set_fname"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("externMD5End"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("ilog2_32"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("MD5Init"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_comment"))).isTrue();
+    }
+
+    @Test
+    void parseHeaderFileWhereFileContainsMethodDeclarationsWithEnumOrStructReturnType() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "enum floatize float_deffmt(int bytes);",
+                "extern enum directive_result  nasm_set_limit(const char *, const char *);",
+                "extern const struct use_package *nasm_find_use_package(const char *);",
+                "struct rbtree *rb_insert(struct rbtree *, struct rbtree *);",
+                "const struct strlist_entry *strlist_add(struct strlist *list, const char *str);");
+        // Test
+        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
+        assertThat(result.getMethodDeclarations().size()).isEqualTo(5);
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("float_deffmt"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_set_limit"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_find_use_package"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("rb_insert"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("strlist_add"))).isTrue();
+    }
+
+    @Test
+    void parseHeaderFileWhereFileContainsMethodDeclarationsWithConstFuncOrPureFuncReturnType() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "extern unsigned int const_func ilog2_32(uint32_t v);",
+                "extern int const_func alignlog2_32(uint32_t v);",
+                "int pure_func nasm_strnicmp(const char *, const char *, size_t);");
+        // Test
+        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
         assertThat(result.getMethodDeclarations().size()).isEqualTo(3);
-        assertThat(result.getMethodDeclarations().get(0).getName()).isEqualTo("assemble");
-        assertThat(result.getMethodDeclarations().get(1).getName()).isEqualTo("process_directives");
-        assertThat(result.getMethodDeclarations().get(2).getName()).isEqualTo("process_pragma");
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("ilog2_32"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("alignlog2_32"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_strnicmp"))).isTrue();
+    }
+
+    @Test
+    void parseHeaderFileWhereFileContainsMethodDeclarationsWithSafeAllocOrSafeMallocReturnType() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void * safe_alloc strlist_linearize(const struct strlist *list, char sep);",
+                "void * safe_malloc(1) nasm_malloc(size_t);",
+                "void * safe_malloc2(1,2) nasm_calloc(size_t, size_t);"
+                );
+        // Test
+        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
+        assertThat(result.getMethodDeclarations().size()).isEqualTo(3);
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("strlist_linearize"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_malloc"))).isTrue();
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_calloc"))).isTrue();
     }
 
     @Test

@@ -103,11 +103,29 @@ public class Application {
         }
     }
 
-    void parseSourceFile(List<String> sourceLines, String fileName) {
-    }
-
     private Pattern includePattern = Pattern.compile("^\\s*#include \"(.+)\"\\s*$");
-    private Pattern methodDeclarationPattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+\\*?([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
+
+    private Pattern methodDeclarationPattern = Pattern.compile(
+            "^\\s*(?:extern\\s+)?(?:const\\s+)?(?:(?:enum|struct|unsigned)\\s+)?[a-zA-Z0-9_]+\\s+\\*{0,2}\\s*" +
+                    "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\d+\\))\\s+)?" +
+                    "([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
+
+    CSourceFile parseSourceFile(List<String> sourceLines, String fileName) {
+        CSourceFile cSourceFile = new CSourceFile();
+        for (String line : sourceLines) {
+            Matcher matcher = includePattern.matcher(line);
+            if ( matcher.matches() ) {
+                String includeHeaderFile = matcher.group(1);
+                cSourceFile.addIncludeHeaderFile(includeHeaderFile);
+            }
+            matcher = methodDeclarationPattern.matcher(line);
+            if ( matcher.matches() ) {
+                String methodName = matcher.group(1);
+                cSourceFile.addMethodDeclaration(methodName);
+            }
+        }
+        return cSourceFile;
+    }
 
     CHeaderFile parseHeaderFile(List<String> sourceLines) {
         CHeaderFile cHeaderFile = new CHeaderFile();
