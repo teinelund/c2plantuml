@@ -16,7 +16,6 @@ public class CMethodDeclaration {
 
     @Override
     public boolean equals(Object obj) {
-        Objects.equals(obj, name);
         if (obj == this) {
             return true;
         }

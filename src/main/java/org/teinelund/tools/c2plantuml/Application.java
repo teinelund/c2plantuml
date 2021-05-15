@@ -111,6 +111,9 @@ public class Application {
                     "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\d+\\))\\s+)?" +
                     "([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
 
+    //private Pattern methodDefinition_1_Pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+([a-zA-Z0-9_]+)\\(.*\\)\\s*$");
+    private Pattern methodDefinition_1_Pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+([a-zA-Z0-9_]+)\\(.*\\)\\s*$");
+
     CSourceFile parseSourceFile(List<String> sourceLines) {
         CSourceFile cSourceFile = new CSourceFile();
         for (String line : sourceLines) {
@@ -123,6 +126,13 @@ public class Application {
             if ( matcher.matches() ) {
                 String methodName = matcher.group(1);
                 cSourceFile.addMethodDeclaration(methodName);
+            }
+
+            // Find Method Definition
+            matcher = methodDefinition_1_Pattern.matcher(line);
+            if ( matcher.matches() ) {
+                String methodName = matcher.group(1);
+                cSourceFile.addMethodImplementation(methodName);
             }
         }
         return cSourceFile;

@@ -27,6 +27,7 @@ public class ApplicationTest {
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -41,6 +42,7 @@ public class ApplicationTest {
         assertThat(result.getIncludeHeaderFiles().get(0)).isEqualTo("nasm.h");
 
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -57,6 +59,7 @@ public class ApplicationTest {
         assertThat(result.getIncludeHeaderFiles().contains("perfhash.h")).isTrue();
 
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -78,6 +81,8 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("assemble"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("process_directives"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("process_pragma"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -95,6 +100,8 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().size()).isEqualTo(2);
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("MD5End"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("colln"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -119,6 +126,8 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("ilog2_32"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("MD5Init"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_comment"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -142,6 +151,8 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_find_use_package"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("rb_insert"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("strlist_add"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -161,6 +172,8 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("ilog2_32"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("alignlog2_32"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_strnicmp"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
@@ -181,10 +194,29 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("strlist_linearize"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_malloc"))).isTrue();
         assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("nasm_calloc"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
     }
 
     @Test
-    void parseSourceFileWhereFileContainValidContent() {
+    void parseSourceFileWhereFileContainsMethodDefinitionsWithSimpleReturnType() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void set_default_limits(void)");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation("set_default_limits"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainValidHeaderFileContent() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "/* ----------------------------------------------------------------------- *",
