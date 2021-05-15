@@ -41,7 +41,8 @@ public class Application {
     Path inputPath;
     Path outputPath;
     Collection<Path> paths;
-    Collection<CHeaderFile> cHeaderFiles = new ArrayList<>();
+    Collection<CSourceFile> cHeaderFiles = new ArrayList<>();
+    Collection<CSourceFile> cSourceFiles = new ArrayList<>();
 
     public static void main(String[] args) {
         Application application = new Application();
@@ -96,10 +97,10 @@ public class Application {
         String FileNameName = fileName.toString();
         List<String> sourceLines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
         if (FileNameName.endsWith(".h")) {
-            cHeaderFiles.add(parseHeaderFile(sourceLines));
+            cHeaderFiles.add(parseSourceFile(sourceLines));
         }
         else {
-            parseSourceFile(sourceLines, FileNameName);
+            cSourceFiles.add(parseSourceFile(sourceLines));
         }
     }
 
@@ -110,7 +111,7 @@ public class Application {
                     "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\d+\\))\\s+)?" +
                     "([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
 
-    CSourceFile parseSourceFile(List<String> sourceLines, String fileName) {
+    CSourceFile parseSourceFile(List<String> sourceLines) {
         CSourceFile cSourceFile = new CSourceFile();
         for (String line : sourceLines) {
             Matcher matcher = includePattern.matcher(line);
@@ -125,23 +126,6 @@ public class Application {
             }
         }
         return cSourceFile;
-    }
-
-    CHeaderFile parseHeaderFile(List<String> sourceLines) {
-        CHeaderFile cHeaderFile = new CHeaderFile();
-        for (String line : sourceLines) {
-            Matcher matcher = includePattern.matcher(line);
-            if ( matcher.matches() ) {
-                String includeHeaderFile = matcher.group(1);
-                cHeaderFile.addIncludeHeaderFile(includeHeaderFile);
-            }
-            matcher = methodDeclarationPattern.matcher(line);
-            if ( matcher.matches() ) {
-                String methodName = matcher.group(1);
-                cHeaderFile.addMethodDeclaration(methodName);
-            }
-        }
-        return cHeaderFile;
     }
 
     Collection<Path> fetchCFiles() throws IOException {

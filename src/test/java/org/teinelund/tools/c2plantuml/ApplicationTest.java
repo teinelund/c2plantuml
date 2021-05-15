@@ -19,22 +19,22 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileIsEmpty() {
+    void parseSourceFileWhereFileIsEmpty() {
         // Initialize
         List<String> cHeaderFilecontent = Collections.emptyList();
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
     }
 
     @Test
-    void parseHeaderFileWhereFileContainOneIncludeStatement() {
+    void parseSourceFileWhereFileContainOneIncludeStatement() {
         // Initialize
         List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
         assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(1);
@@ -44,11 +44,11 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainThreeIncludeStatement() {
+    void parseSourceFileWhereFileContainThreeIncludeStatement() {
         // Initialize
         List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"", "#include \"iflag.h\"", "#include \"perfhash.h\"");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
         assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(3);
@@ -60,7 +60,7 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainsMethodDeclarationsWithSimpleReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationsWithSimpleReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction);",
@@ -68,7 +68,7 @@ public class ApplicationTest {
                 "bool process_directives(char *);",
                 "void process_pragma(char *);");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -81,13 +81,13 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainsMethodDeclarationsWithPointerReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationsWithPointerReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "char * MD5End(MD5_CTX *, char *);",
                 "void **colln(Collection * c, int index);");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -98,7 +98,7 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainsMethodDeclarationsWithConstExternReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationsWithConstExternReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "const char *src_set_fname(const char *newname);",
@@ -108,7 +108,7 @@ public class ApplicationTest {
                 "extern const char *nasm_comment(void);"
         );
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -122,7 +122,7 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainsMethodDeclarationsWithEnumOrStructReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationsWithEnumOrStructReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "enum floatize float_deffmt(int bytes);",
@@ -131,7 +131,7 @@ public class ApplicationTest {
                 "struct rbtree *rb_insert(struct rbtree *, struct rbtree *);",
                 "const struct strlist_entry *strlist_add(struct strlist *list, const char *str);");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -145,14 +145,14 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainsMethodDeclarationsWithConstFuncOrPureFuncReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationsWithConstFuncOrPureFuncReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "extern unsigned int const_func ilog2_32(uint32_t v);",
                 "extern int const_func alignlog2_32(uint32_t v);",
                 "int pure_func nasm_strnicmp(const char *, const char *, size_t);");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -164,7 +164,7 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainsMethodDeclarationsWithSafeAllocOrSafeMallocReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationsWithSafeAllocOrSafeMallocReturnType() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "void * safe_alloc strlist_linearize(const struct strlist *list, char sep);",
@@ -172,7 +172,7 @@ public class ApplicationTest {
                 "void * safe_malloc2(1,2) nasm_calloc(size_t, size_t);"
                 );
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -184,7 +184,7 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseHeaderFileWhereFileContainValidContent() {
+    void parseSourceFileWhereFileContainValidContent() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "/* ----------------------------------------------------------------------- *",
@@ -203,7 +203,7 @@ public class ApplicationTest {
                 "#endif /* NASM_QUOTE_H */",
                 "");
         // Test
-        CHeaderFile result = this.sut.parseHeaderFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
         assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(1);
