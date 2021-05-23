@@ -116,7 +116,11 @@ public class Application {
                     "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\s*\\d+\\)|printf_func\\(\\d+,\\s*\\d+\\))\\s+)?" +
                     "([a-zA-Z0-9_]+)\\(.*\\)\\s*\\{\\s*$");
 
-    private Pattern methodCurlyBracesClose = Pattern.compile("^\\s*}\\s*$");
+    private Pattern methodCurlyBracesClose = Pattern.compile("^\\s*}.*$");
+
+    private Pattern methodCurlyBracesOpen = Pattern.compile("^.*\\{\\s*$");
+
+    private Pattern singleLineComment = Pattern.compile("/\\*.*\\*/");
 
     CSourceFile parseSourceFile(List<String> sourceLines, String fileNameName) {
         String[] lineMemory = clearMemory();
@@ -125,6 +129,13 @@ public class Application {
         STATE state = STATE.OUTSIDE_METHOD_DEFINITION;
         int nrOfOpenCurlyBraces = 0;
         for (String line : sourceLines) {
+
+            // Replace singe line comments
+            Matcher matcher = singleLineComment.matcher(line);
+            if (matcher.find()) {
+                line = matcher.replaceAll("");
+            }
+
             addNewLineToMemory(line, lineMemory);
 
             boolean foundMatch = false;
@@ -132,7 +143,7 @@ public class Application {
             switch (state) {
                 case OUTSIDE_METHOD_DEFINITION:
                     // Check one line
-                    Matcher matcher = includePattern.matcher(line);
+                    matcher = includePattern.matcher(line);
                     if (matcher.matches()) {
                         String includeHeaderFile = matcher.group(1);
                         cSourceFile.addIncludeHeaderFile(includeHeaderFile);
@@ -180,14 +191,29 @@ public class Application {
                             nrOfOpenCurlyBraces = 1;
                         }
                     }
-                    break;
-                case INSIDE_METHOD_DEFINITION:
+
+                    // Try finding dangling braces
                     matcher = methodCurlyBracesClose.matcher(line);
                     if (!foundMatch && matcher.matches()) {
                         lineMemory = clearMemory();
-                        foundMatch = true;
-                        state = STATE.INSIDE_METHOD_DEFINITION;
                         nrOfOpenCurlyBraces--;
+                    }
+                    matcher = methodCurlyBracesOpen.matcher(line);
+                    if (!foundMatch && matcher.matches()) {
+                        lineMemory = clearMemory();
+                        nrOfOpenCurlyBraces++;
+                    }
+                    break;
+                case INSIDE_METHOD_DEFINITION:
+                    matcher = methodCurlyBracesClose.matcher(line);
+                    if (matcher.matches()) {
+                        lineMemory = clearMemory();
+                        nrOfOpenCurlyBraces--;
+                    }
+                    matcher = methodCurlyBracesOpen.matcher(line);
+                    if (matcher.matches()) {
+                        lineMemory = clearMemory();
+                        nrOfOpenCurlyBraces++;
                     }
 
                     if (nrOfOpenCurlyBraces == 0) {
@@ -199,6 +225,9 @@ public class Application {
 
         if (state == STATE.INSIDE_METHOD_DEFINITION) {
             throw new RuntimeException("No closing curly brace found in method '" + methodName + "' in file name '" + fileNameName + "'.");
+        }
+        if (nrOfOpenCurlyBraces != 0) {
+            throw new RuntimeException("Dangling curly brace after or near method '" + methodName + "' in file name '" + fileNameName + "'.");
         }
         return cSourceFile;
     }

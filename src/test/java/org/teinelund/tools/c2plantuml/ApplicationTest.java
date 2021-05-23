@@ -46,6 +46,21 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainOneIncludeStatementWithSingleLineComment() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"  /* This is an important comment */");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
+        assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(1);
+        assertThat(result.getIncludeHeaderFiles().get(0)).isEqualTo("nasm.h");
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
+    }
+
+    @Test
     void parseSourceFileWhereFileContainThreeIncludeStatement() {
         // Initialize
         List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"", "#include \"iflag.h\"", "#include \"perfhash.h\"");
@@ -442,6 +457,104 @@ public class ApplicationTest {
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
         assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_error"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStatementBlockWithLonelyBraces() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_function(void)",
+                "{",
+                "   if (x > 5)",
+                "   {",
+                "       y = 3;",
+                "   }",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStatementBlockWithLonelyBracesAndComments() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_function(void)",
+                "{",
+                "   if (x > 5)",
+                "   {  /* *p and *q have same type */",
+                "       y = 3;",
+                "   }",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStatementBlockContainingOpenBrace() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_function(void)",
+                "{",
+                "   if (p->type > q->type) {",
+                "       addtotemp(q->type, q->value);",
+                "       lasttype = q++->type;",
+                "   }",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStatementBlockContainingNonLonelyClosingBrace() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_function(void)",
+                "{",
+                "   if (p->type > q->type) {",
+                "       addtotemp(q->type, q->value);",
+                "   } else",
+                "   {",
+                "       lasttype = q++->type;",
+                "   }",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStatementBlockContainingBothOpenAndClosingBrace() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_function(void)",
+                "{",
+                "   if (p->type > q->type) {",
+                "       addtotemp(q->type, q->value);",
+                "   } else {",
+                "       lasttype = q++->type;",
+                "   }",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
     }
 
     @Test
