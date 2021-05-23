@@ -188,7 +188,7 @@ public class Application {
 
                     // Consider two lines
                     if (!foundMatch && !lineMemory[1].isBlank()) {
-                        String twoLines = lineMemory[1] + " " + line;
+                        String twoLines = lineMemory[1] + " " + lineMemory[0];
                         matcher = methodDeclarationPattern.matcher(twoLines);
                         if (!foundMatch && matcher.matches()) {
                             methodName = matcher.group(1);
@@ -199,6 +199,20 @@ public class Application {
 
                         // Find Method Definition
                         matcher = methodDefinitionPattern.matcher(twoLines);
+                        if (!foundMatch && matcher.matches()) {
+                            methodName = matcher.group(1);
+                            cSourceFile.addMethodImplementation(methodName);
+                            lineMemory = clearMemory();
+                            foundMatch = true;
+                            state = STATE.INSIDE_METHOD_DEFINITION;
+                            nrOfOpenCurlyBraces = 1;
+                        }
+                    }
+                    if (!foundMatch && !lineMemory[1].isBlank() && !lineMemory[2].isBlank()) {
+                        String threeLines = lineMemory[2] + " " + lineMemory[1] + " " + lineMemory[0];
+
+                        // Find Method Definition
+                        matcher = methodDefinitionPattern.matcher(threeLines);
                         if (!foundMatch && matcher.matches()) {
                             methodName = matcher.group(1);
                             cSourceFile.addMethodImplementation(methodName);
@@ -250,13 +264,14 @@ public class Application {
     }
 
     String[] clearMemory() {
-        String[] array = {"", ""};
+        String[] array = {"", "", ""};
         return array;
     }
 
     void addNewLineToMemory(String line, String[] lineMemory) {
+        lineMemory[2] = lineMemory[1];
         lineMemory[1] = lineMemory[0];
-        lineMemory[0] = line;
+        lineMemory[0] = line.trim();
     }
 
     Collection<Path> fetchCFiles() throws IOException {

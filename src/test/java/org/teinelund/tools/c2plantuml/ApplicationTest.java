@@ -480,6 +480,26 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainsethodDefinitionsOnThreeLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,",
+                "               int *fwref, bool crit, struct eval_hints *hints)",
+                "{",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "evaluate"))).isTrue();
+    }
+
+    @Test
     void parseSourceFileWhereFileContainsStatementBlockWithLonelyBraces() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
