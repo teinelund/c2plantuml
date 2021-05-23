@@ -107,35 +107,87 @@ public class Application {
     private Pattern includePattern = Pattern.compile("^\\s*#include \"(.+)\"\\s*$");
 
     private Pattern methodDeclarationPattern = Pattern.compile(
-            "^\\s*(?:extern\\s+)?(?:const\\s+)?(?:(?:enum|struct|unsigned)\\s+)?[a-zA-Z0-9_]+\\s+\\*{0,2}\\s*" +
-                    "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\d+\\))\\s+)?" +
+            "^\\s*(?:extern\\s+)?(?:const\\s+)?(?:static\\s+)?(?:(?:enum|struct|unsigned)\\s+)?[a-zA-Z0-9_]+\\s+\\*{0,2}\\s*" +
+                    "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\s*\\d+\\))\\s+)?" +
                     "([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
 
     //private Pattern methodDefinition_1_Pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+([a-zA-Z0-9_]+)\\(.*\\)\\s*$");
-    private Pattern methodDefinition_1_Pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+([a-zA-Z0-9_]+)\\(.*\\)\\s*$");
+    private Pattern methodDefinition_1_Pattern = Pattern.compile(
+            "^\\s*(?:static\\s+)?(?:inline\\s+)?(?:(?:enum|struct|unsigned)\\s+)?[a-zA-Z0-9_]+\\s+\\*{0,2}\\s*" +
+                    "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\s*\\d+\\)|printf_func\\(\\d+,\\s*\\d+\\))\\s+)?" +
+                    "([a-zA-Z0-9_]+)\\(.*\\)\\s*\\{\\s*$");
 
     CSourceFile parseSourceFile(List<String> sourceLines) {
+        String[] lineMemory = clearMemory();
         CSourceFile cSourceFile = new CSourceFile();
         for (String line : sourceLines) {
+            addNewLineToMemory(line, lineMemory);
+
+            boolean foundMatch = false;
+            // Check one line
             Matcher matcher = includePattern.matcher(line);
             if ( matcher.matches() ) {
                 String includeHeaderFile = matcher.group(1);
                 cSourceFile.addIncludeHeaderFile(includeHeaderFile);
+                lineMemory = clearMemory();
+                foundMatch = true;
             }
             matcher = methodDeclarationPattern.matcher(line);
-            if ( matcher.matches() ) {
+            if ( !foundMatch && matcher.matches() ) {
                 String methodName = matcher.group(1);
                 cSourceFile.addMethodDeclaration(methodName);
+                lineMemory = clearMemory();
+                foundMatch = true;
             }
 
             // Find Method Definition
             matcher = methodDefinition_1_Pattern.matcher(line);
-            if ( matcher.matches() ) {
+            if ( !foundMatch && matcher.matches() ) {
                 String methodName = matcher.group(1);
                 cSourceFile.addMethodImplementation(methodName);
+                lineMemory = clearMemory();
+                foundMatch = true;
+            }
+
+            // Consider two lines
+            if (!foundMatch && !lineMemory[1].isBlank()) {
+                String twoLines = lineMemory[1] + " " + line;
+                matcher = includePattern.matcher(twoLines);
+                if (matcher.matches()) {
+                    String includeHeaderFile = matcher.group(1);
+                    cSourceFile.addIncludeHeaderFile(includeHeaderFile);
+                    lineMemory = clearMemory();
+                    foundMatch = true;
+                }
+                matcher = methodDeclarationPattern.matcher(twoLines);
+                if (!foundMatch && matcher.matches()) {
+                    String methodName = matcher.group(1);
+                    cSourceFile.addMethodDeclaration(methodName);
+                    lineMemory = clearMemory();
+                    foundMatch = true;
+                }
+
+                // Find Method Definition
+                matcher = methodDefinition_1_Pattern.matcher(twoLines);
+                if (!foundMatch && matcher.matches()) {
+                    String methodName = matcher.group(1);
+                    cSourceFile.addMethodImplementation(methodName);
+                    lineMemory = clearMemory();
+                    foundMatch = true;
+                }
             }
         }
         return cSourceFile;
+    }
+
+    String[] clearMemory() {
+        String[] array = {"", ""};
+        return array;
+    }
+
+    void addNewLineToMemory(String line, String[] lineMemory) {
+        lineMemory[1] = lineMemory[0];
+        lineMemory[0] = line;
     }
 
     Collection<Path> fetchCFiles() throws IOException {

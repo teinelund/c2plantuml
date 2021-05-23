@@ -199,10 +199,29 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseSourceFileWhereFileContainsMethodDefinitionsWithSimpleReturnType() {
+    void parseSourceFileWhereFileContainsMethodDeclarationWithDeclarationOnTwoLines() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
-                "void set_default_limits(void)");
+            "static enum ea_type process_ea(operand *, ea *, int, int,",
+            "opflags_t, insn *, const char **);"
+        );
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isFalse();
+        assertThat(result.getMethodDeclarations().size()).isEqualTo(1);
+        assertThat(result.getMethodDeclarations().contains(new CMethodDeclaration("process_ea"))).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsMethodDefinitionsWithSimpleReturnTypeOnSingleLine() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void set_default_limits(void) {");
         // Test
         CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
         // Verify
@@ -212,7 +231,205 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation("set_default_limits"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "set_default_limits"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsMethodDefinitionsWithSimpleReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "int32_t seg_alloc(void)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "seg_alloc"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsMethodDefinitionsWithEnumReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "enum directive_result list_pragma(const struct pragma *pragma)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_pragma"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticMethodDefinitionsWithSimpleReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static void begintemp(void)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "begintemp"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsNonStaticMethodDefinitionsWithSimpleReturnTypeOnTwoLines_2() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void process_pragma(char *str)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "process_pragma"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticMethodDefinitionsWithSimpleReturnTypeOnTwoLines_2() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static size_t utf8_to_16be(uint8_t *str, size_t len, char *op)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "utf8_to_16be"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticMethodDefinitionsWithPointerSafeAllocReturnTypeOnTwoLines_2() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static char * safe_alloc perm_alloc(size_t len)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "perm_alloc"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticInlineMethodDefinitionsWithEnumReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static inline enum pp_token_type tok_smac_param(int param)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "tok_smac_param"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticMethodDefinitionsWithStructReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static struct src_location error_where(errflags severity)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "error_where"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticInlineMethodDefinitionsWithUnsignedReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static inline unsigned int tok_check_len(size_t len)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "tok_check_len"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticInlineMethodDefinitionsWithBasicReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static inline bool pp_concat_match(const Token *t, unsigned int mask)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "pp_concat_match"))).isTrue();
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsStaticPrintfFuncMethodDefinitionsWithBasicReturnTypeOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static void printf_func(2, 3) list_error(errflags severity, const char *fmt, ...)",
+                "{");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_error"))).isTrue();
     }
 
     @Test
