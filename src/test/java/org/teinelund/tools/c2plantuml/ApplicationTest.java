@@ -61,6 +61,26 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainOneIncludeStatementWithMultiLineComment() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "#include \"nasm.h\"/* This is an important comment",
+                " * more comment",
+                " * .. and yet more",
+                "end of comment */#include \"common.h\"");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
+        assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(2);
+        assertThat(result.getIncludeHeaderFiles().get(0)).isEqualTo("nasm.h");
+        assertThat(result.getIncludeHeaderFiles().get(1)).isEqualTo("common.h");
+
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isTrue();
+    }
+
+    @Test
     void parseSourceFileWhereFileContainThreeIncludeStatement() {
         // Initialize
         List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"", "#include \"iflag.h\"", "#include \"perfhash.h\"");

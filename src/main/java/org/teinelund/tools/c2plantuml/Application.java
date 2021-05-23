@@ -128,12 +128,29 @@ public class Application {
         String methodName = "";
         STATE state = STATE.OUTSIDE_METHOD_DEFINITION;
         int nrOfOpenCurlyBraces = 0;
+        boolean isMultilineComment = false;
         for (String line : sourceLines) {
 
             // Replace singe line comments
             Matcher matcher = singleLineComment.matcher(line);
             if (matcher.find()) {
                 line = matcher.replaceAll("");
+            }
+            // Remove multi line comments
+            if (isMultilineComment) {
+                int index = line.indexOf("*/");
+                if (index >= 0) {
+                    line = line.substring(index + 2);
+                    isMultilineComment = false;
+                }
+                else {
+                    continue;
+                }
+            }
+            int index = line.indexOf("/*");
+            if (index >= 0) {
+                line = line.substring(0, index);
+                isMultilineComment = true;
             }
 
             addNewLineToMemory(line, lineMemory);
