@@ -23,7 +23,7 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = Collections.emptyList();
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
@@ -35,7 +35,7 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
         assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(1);
@@ -50,7 +50,7 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of("#include \"nasm.h\"", "#include \"iflag.h\"", "#include \"perfhash.h\"");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
         assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(3);
@@ -71,7 +71,7 @@ public class ApplicationTest {
                 "bool process_directives(char *);",
                 "void process_pragma(char *);");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -92,7 +92,7 @@ public class ApplicationTest {
                 "char * MD5End(MD5_CTX *, char *);",
                 "void **colln(Collection * c, int index);");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -115,7 +115,7 @@ public class ApplicationTest {
                 "extern const char *nasm_comment(void);"
         );
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -140,7 +140,7 @@ public class ApplicationTest {
                 "struct rbtree *rb_insert(struct rbtree *, struct rbtree *);",
                 "const struct strlist_entry *strlist_add(struct strlist *list, const char *str);");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -163,7 +163,7 @@ public class ApplicationTest {
                 "extern int const_func alignlog2_32(uint32_t v);",
                 "int pure_func nasm_strnicmp(const char *, const char *, size_t);");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -185,7 +185,7 @@ public class ApplicationTest {
                 "void * safe_malloc2(1,2) nasm_calloc(size_t, size_t);"
                 );
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -206,7 +206,7 @@ public class ApplicationTest {
             "opflags_t, insn *, const char **);"
         );
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -221,9 +221,10 @@ public class ApplicationTest {
     void parseSourceFileWhereFileContainsMethodDefinitionsWithSimpleReturnTypeOnSingleLine() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
-                "void set_default_limits(void) {");
+                "void set_default_limits(void) {",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -239,9 +240,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "int32_t seg_alloc(void)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -257,9 +259,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "enum directive_result list_pragma(const struct pragma *pragma)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -275,9 +278,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static void begintemp(void)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -293,9 +297,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "void process_pragma(char *str)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -311,9 +316,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static size_t utf8_to_16be(uint8_t *str, size_t len, char *op)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -329,9 +335,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static char * safe_alloc perm_alloc(size_t len)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -347,9 +354,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static inline enum pp_token_type tok_smac_param(int param)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -365,9 +373,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static struct src_location error_where(errflags severity)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -383,9 +392,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static inline unsigned int tok_check_len(size_t len)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -401,9 +411,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static inline bool pp_concat_match(const Token *t, unsigned int mask)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -419,9 +430,10 @@ public class ApplicationTest {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "static void printf_func(2, 3) list_error(errflags severity, const char *fmt, ...)",
-                "{");
+                "{",
+                "}");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
 
@@ -452,7 +464,7 @@ public class ApplicationTest {
                 "#endif /* NASM_QUOTE_H */",
                 "");
         // Test
-        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent);
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
         // Verify
         assertThat(result.getIncludeHeaderFiles().isEmpty()).isFalse();
         assertThat(result.getIncludeHeaderFiles().size()).isEqualTo(1);

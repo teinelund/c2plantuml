@@ -94,13 +94,13 @@ public class Application {
 
     void parsePath(Path path) throws IOException {
         Path fileName = path.getFileName();
-        String FileNameName = fileName.toString();
+        String fileNameName = fileName.toString();
         List<String> sourceLines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
-        if (FileNameName.endsWith(".h")) {
-            cHeaderFiles.add(parseSourceFile(sourceLines));
+        if (fileNameName.endsWith(".h")) {
+            cHeaderFiles.add(parseSourceFile(sourceLines, fileNameName));
         }
         else {
-            cSourceFiles.add(parseSourceFile(sourceLines));
+            cSourceFiles.add(parseSourceFile(sourceLines, fileNameName));
         }
     }
 
@@ -111,71 +111,94 @@ public class Application {
                     "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\s*\\d+\\))\\s+)?" +
                     "([a-zA-Z0-9_]+)\\(.*\\);\\s*$");
 
-    //private Pattern methodDefinition_1_Pattern = Pattern.compile("^\\s*[a-zA-Z0-9_]+\\s+([a-zA-Z0-9_]+)\\(.*\\)\\s*$");
-    private Pattern methodDefinition_1_Pattern = Pattern.compile(
+    private Pattern methodDefinitionPattern = Pattern.compile(
             "^\\s*(?:static\\s+)?(?:inline\\s+)?(?:(?:enum|struct|unsigned)\\s+)?[a-zA-Z0-9_]+\\s+\\*{0,2}\\s*" +
                     "(?:(?:const_func|pure_func|safe_alloc|safe_malloc\\(\\d+\\)|safe_malloc2\\(\\d+,\\s*\\d+\\)|printf_func\\(\\d+,\\s*\\d+\\))\\s+)?" +
                     "([a-zA-Z0-9_]+)\\(.*\\)\\s*\\{\\s*$");
 
-    CSourceFile parseSourceFile(List<String> sourceLines) {
+    private Pattern methodCurlyBracesClose = Pattern.compile("^\\s*}\\s*$");
+
+    CSourceFile parseSourceFile(List<String> sourceLines, String fileNameName) {
         String[] lineMemory = clearMemory();
         CSourceFile cSourceFile = new CSourceFile();
+        String methodName = "";
+        STATE state = STATE.OUTSIDE_METHOD_DEFINITION;
+        int nrOfOpenCurlyBraces = 0;
         for (String line : sourceLines) {
             addNewLineToMemory(line, lineMemory);
 
             boolean foundMatch = false;
-            // Check one line
-            Matcher matcher = includePattern.matcher(line);
-            if ( matcher.matches() ) {
-                String includeHeaderFile = matcher.group(1);
-                cSourceFile.addIncludeHeaderFile(includeHeaderFile);
-                lineMemory = clearMemory();
-                foundMatch = true;
-            }
-            matcher = methodDeclarationPattern.matcher(line);
-            if ( !foundMatch && matcher.matches() ) {
-                String methodName = matcher.group(1);
-                cSourceFile.addMethodDeclaration(methodName);
-                lineMemory = clearMemory();
-                foundMatch = true;
-            }
 
-            // Find Method Definition
-            matcher = methodDefinition_1_Pattern.matcher(line);
-            if ( !foundMatch && matcher.matches() ) {
-                String methodName = matcher.group(1);
-                cSourceFile.addMethodImplementation(methodName);
-                lineMemory = clearMemory();
-                foundMatch = true;
-            }
+            switch (state) {
+                case OUTSIDE_METHOD_DEFINITION:
+                    // Check one line
+                    Matcher matcher = includePattern.matcher(line);
+                    if (matcher.matches()) {
+                        String includeHeaderFile = matcher.group(1);
+                        cSourceFile.addIncludeHeaderFile(includeHeaderFile);
+                        lineMemory = clearMemory();
+                        foundMatch = true;
+                    }
+                    matcher = methodDeclarationPattern.matcher(line);
+                    if (!foundMatch && matcher.matches()) {
+                        methodName = matcher.group(1);
+                        cSourceFile.addMethodDeclaration(methodName);
+                        lineMemory = clearMemory();
+                        foundMatch = true;
+                    }
 
-            // Consider two lines
-            if (!foundMatch && !lineMemory[1].isBlank()) {
-                String twoLines = lineMemory[1] + " " + line;
-                matcher = includePattern.matcher(twoLines);
-                if (matcher.matches()) {
-                    String includeHeaderFile = matcher.group(1);
-                    cSourceFile.addIncludeHeaderFile(includeHeaderFile);
-                    lineMemory = clearMemory();
-                    foundMatch = true;
-                }
-                matcher = methodDeclarationPattern.matcher(twoLines);
-                if (!foundMatch && matcher.matches()) {
-                    String methodName = matcher.group(1);
-                    cSourceFile.addMethodDeclaration(methodName);
-                    lineMemory = clearMemory();
-                    foundMatch = true;
-                }
+                    // Find Method Definition
+                    matcher = methodDefinitionPattern.matcher(line);
+                    if (!foundMatch && matcher.matches()) {
+                        methodName = matcher.group(1);
+                        cSourceFile.addMethodImplementation(methodName);
+                        lineMemory = clearMemory();
+                        foundMatch = true;
+                        state = STATE.INSIDE_METHOD_DEFINITION;
+                        nrOfOpenCurlyBraces = 1;
+                    }
 
-                // Find Method Definition
-                matcher = methodDefinition_1_Pattern.matcher(twoLines);
-                if (!foundMatch && matcher.matches()) {
-                    String methodName = matcher.group(1);
-                    cSourceFile.addMethodImplementation(methodName);
-                    lineMemory = clearMemory();
-                    foundMatch = true;
-                }
+                    // Consider two lines
+                    if (!foundMatch && !lineMemory[1].isBlank()) {
+                        String twoLines = lineMemory[1] + " " + line;
+                        matcher = methodDeclarationPattern.matcher(twoLines);
+                        if (!foundMatch && matcher.matches()) {
+                            methodName = matcher.group(1);
+                            cSourceFile.addMethodDeclaration(methodName);
+                            lineMemory = clearMemory();
+                            foundMatch = true;
+                        }
+
+                        // Find Method Definition
+                        matcher = methodDefinitionPattern.matcher(twoLines);
+                        if (!foundMatch && matcher.matches()) {
+                            methodName = matcher.group(1);
+                            cSourceFile.addMethodImplementation(methodName);
+                            lineMemory = clearMemory();
+                            foundMatch = true;
+                            state = STATE.INSIDE_METHOD_DEFINITION;
+                            nrOfOpenCurlyBraces = 1;
+                        }
+                    }
+                    break;
+                case INSIDE_METHOD_DEFINITION:
+                    matcher = methodCurlyBracesClose.matcher(line);
+                    if (!foundMatch && matcher.matches()) {
+                        lineMemory = clearMemory();
+                        foundMatch = true;
+                        state = STATE.INSIDE_METHOD_DEFINITION;
+                        nrOfOpenCurlyBraces--;
+                    }
+
+                    if (nrOfOpenCurlyBraces == 0) {
+                        state = STATE.OUTSIDE_METHOD_DEFINITION;
+                    }
+                    break;
             }
+        }
+
+        if (state == STATE.INSIDE_METHOD_DEFINITION) {
+            throw new RuntimeException("No closing curly brace found in method '" + methodName + "' in file name '" + fileNameName + "'.");
         }
         return cSourceFile;
     }
@@ -256,3 +279,5 @@ public class Application {
         }
     }
 }
+
+enum STATE {OUTSIDE_METHOD_DEFINITION, INSIDE_METHOD_DEFINITION};
