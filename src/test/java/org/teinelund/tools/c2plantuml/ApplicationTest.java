@@ -703,6 +703,29 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainsMethodInvokationsOnTwoLinesWithVariableAssignment() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_method(void)",
+                "{",
+                "     while (ntempexpr >= tempexpr_size) {",
+                "        tempexpr = nasm_realloc(tempexpr,",
+                "                                tempexpr_size * sizeof(*tempexpr));",
+                "     }",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_realloc");
+    }
+
+    @Test
     void parseSourceFileWhereFileContainValidHeaderFileContent() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
