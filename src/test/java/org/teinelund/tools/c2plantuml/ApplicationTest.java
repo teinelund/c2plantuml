@@ -598,7 +598,7 @@ public class ApplicationTest {
     }
 
     @Test
-    void parseSourceFileWhereFileContainsOneSimpleMethodInvokation() {
+    void parseSourceFileWhereFileContainsOneSimpleMethodInvokationReturningVoid() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
                 "void some_function(void)",
@@ -613,7 +613,73 @@ public class ApplicationTest {
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
         assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
         assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_free");
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsOneSimpleMethodInvokationInReturnStatement() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "int some_function(void)",
+                "{",
+                "               return finishtemp();",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("finishtemp");
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsThreeSimpleMethodInvokations() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "static expr *scalarvect(int64_t scalar)",
+                "{",
+                "    begintemp();",
+                "    addtotemp(EXPR_SIMPLE, scalar);",
+                "    return finishtemp();",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(3);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("begintemp");
+        assertThat(methodImplementation.getMethodInvokations().get(1)).isEqualTo("addtotemp");
+        assertThat(methodImplementation.getMethodInvokations().get(2)).isEqualTo("finishtemp");
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsMethodInvokationsOnTwoLines() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_method(void)",
+                "{",
+                "    addtotemp((base == NO_SEG ? EXPR_UNKNOWN : EXPR_SEGBASE + base),",
+                "                  1L);",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("addtotemp");
     }
 
     @Test

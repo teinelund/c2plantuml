@@ -122,7 +122,9 @@ public class Application {
 
     private Pattern singleLineComment = Pattern.compile("/\\*.*\\*/");
 
-    private Pattern methodInvokation = Pattern.compile("^\\s*([a-zA-Z0-9_]+)\\(.*\\)\\s*\\;\\s*$");
+    // TODO:
+    // int32_t base = ofmt->segbase(seg + 1);
+    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?([a-zA-Z0-9_]+)\\(.*\\)\\s*\\;\\s*$");
 
 
 
@@ -240,21 +242,42 @@ public class Application {
                     }
                     break;
                 case INSIDE_METHOD_DEFINITION:
+                    // one line
+                    boolean foundCurlyrace = false;
                     matcher = methodCurlyBracesClose.matcher(line);
                     if (matcher.matches()) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces--;
+                        foundCurlyrace = true;
                     }
                     matcher = methodCurlyBracesOpen.matcher(line);
                     if (matcher.matches()) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces++;
+                        foundCurlyrace = true;
+                    }
+                    if (foundCurlyrace) {
+                        foundMatch = true;
                     }
 
                     matcher = methodInvokation.matcher(line);
-                    if (matcher.matches()) {
+                    if (!foundMatch && matcher.matches()) {
                         methodName = matcher.group(1);
                         cSourceFile.addMethodInvokation(methodName);
+                        lineMemory = clearMemory();
+                        foundMatch = true;
+                    }
+
+                    // two lines
+                    if (!foundMatch && !lineMemory[1].isBlank()) {
+                        String twoLines = lineMemory[1] + " " + lineMemory[0];
+                        matcher = methodInvokation.matcher(twoLines);
+                        if (matcher.matches()) {
+                            methodName = matcher.group(1);
+                            cSourceFile.addMethodInvokation(methodName);
+                            lineMemory = clearMemory();
+                            foundMatch = true;
+                        }
                     }
 
                     if (nrOfOpenCurlyBraces == 0) {
