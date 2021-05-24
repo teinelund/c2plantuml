@@ -124,7 +124,7 @@ public class Application {
 
     // TODO:
     // int32_t base = ofmt->segbase(seg + 1);
-    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?([a-zA-Z0-9_]+)\\(.*\\)\\s*\\;\\s*$");
+    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?(?:[a-zA-Z0-9_]+\\s*=\\s*)?([a-zA-Z0-9_]+)\\(.*\\)\\s*\\;\\s*$");
 
 
 

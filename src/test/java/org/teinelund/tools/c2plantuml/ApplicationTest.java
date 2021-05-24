@@ -638,6 +638,26 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainsOneSimpleMethodInvokationInReturnStatementWithAssignment() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "int some_function(void)",
+                "{",
+                "       return tt = scanfunc(scpriv, tokval);",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("scanfunc");
+    }
+
+    @Test
     void parseSourceFileWhereFileContainsThreeSimpleMethodInvokations() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
