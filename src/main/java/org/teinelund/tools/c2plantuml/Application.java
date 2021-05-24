@@ -124,7 +124,9 @@ public class Application {
 
     // TODO:
     // int32_t base = ofmt->segbase(seg + 1);
-    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?(?:[a-zA-Z0-9_]+\\s*=\\s*)?([a-zA-Z0-9_]+)\\(.*\\)\\s*\\;\\s*$");
+    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?(?:[a-zA-Z0-9_]+\\s*=\\s*)?([a-zA-Z0-9_]+)\\((.*)\\)\\s*\\;\\s*$");
+
+    private Pattern methodInvokationInsideExpression = Pattern.compile("^.*\\s+([a-zA-Z0-9_]+)\\(.*\\).*$");
 
 
 
@@ -266,6 +268,13 @@ public class Application {
                         cSourceFile.addMethodInvokation(methodName);
                         lineMemory = clearMemory();
                         foundMatch = true;
+
+                        String expression = matcher.group(2);
+                        matcher = methodInvokationInsideExpression.matcher(expression);
+                        if (matcher.matches()) {
+                            methodName = matcher.group(1);
+                            cSourceFile.addMethodInvokation(methodName);
+                        }
                     }
 
                     // two lines
@@ -277,6 +286,13 @@ public class Application {
                             cSourceFile.addMethodInvokation(methodName);
                             lineMemory = clearMemory();
                             foundMatch = true;
+
+                            String expression = matcher.group(2);
+                            matcher = methodInvokationInsideExpression.matcher(expression);
+                            if (matcher.matches()) {
+                                methodName = matcher.group(1);
+                                cSourceFile.addMethodInvokation(methodName);
+                            }
                         }
                     }
 

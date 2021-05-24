@@ -710,7 +710,7 @@ public class ApplicationTest {
                 "{",
                 "     while (ntempexpr >= tempexpr_size) {",
                 "        tempexpr = nasm_realloc(tempexpr,",
-                "                                tempexpr_size * sizeof(*tempexpr));",
+                "                                tempexpr_size * 4);",
                 "     }",
                 "}");
         // Test
@@ -723,6 +723,28 @@ public class ApplicationTest {
         assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
         assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
         assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_realloc");
+    }
+
+    @Test
+    void parseSourceFileWhereFileContainsMethodInvokationsWithMethodInvokationAmongParameters() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_method(void)",
+                "{",
+                "    tempexprs = nasm_realloc(tempexprs,",
+                "                         tempexprs_size * sizeof(*tempexprs));",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(2);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_realloc");
+        assertThat(methodImplementation.getMethodInvokations().get(1)).isEqualTo("sizeof");
     }
 
     @Test
