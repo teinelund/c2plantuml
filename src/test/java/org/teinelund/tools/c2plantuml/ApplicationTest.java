@@ -598,6 +598,25 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainsOneSimpleMethodInvokation() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_function(void)",
+                "{",
+                "   nasm_free(tempexprs[--ntempexprs]);",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_free");
+    }
+
+    @Test
     void parseSourceFileWhereFileContainValidHeaderFileContent() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(

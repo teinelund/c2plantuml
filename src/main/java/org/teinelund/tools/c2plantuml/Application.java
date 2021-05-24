@@ -122,6 +122,10 @@ public class Application {
 
     private Pattern singleLineComment = Pattern.compile("/\\*.*\\*/");
 
+    private Pattern methodInvokation = Pattern.compile("^\\s*([a-zA-Z0-9_]+)\\(.*\\)\\s*\\;\\s*$");
+
+
+
     CSourceFile parseSourceFile(List<String> sourceLines, String fileNameName) {
         String[] lineMemory = clearMemory();
         CSourceFile cSourceFile = new CSourceFile();
@@ -245,6 +249,12 @@ public class Application {
                     if (matcher.matches()) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces++;
+                    }
+
+                    matcher = methodInvokation.matcher(line);
+                    if (matcher.matches()) {
+                        methodName = matcher.group(1);
+                        cSourceFile.addMethodInvokation(methodName);
                     }
 
                     if (nrOfOpenCurlyBraces == 0) {
