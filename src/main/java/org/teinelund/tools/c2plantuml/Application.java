@@ -124,9 +124,9 @@ public class Application {
 
     // TODO:
     // int32_t base = ofmt->segbase(seg + 1);
-    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?(?:[a-zA-Z0-9_]+\\s*=\\s*)?([a-zA-Z0-9_]+)\\((.*)\\)\\s*\\;\\s*$");
+    private Pattern methodInvokation = Pattern.compile("^\\s*(?:return\\s+)?(?:[a-zA-Z0-9_]+\\s*=\\s*)?[a-zA-Z0-9_]+\\(.*?\\).*\\;\\s*$");
 
-    private Pattern methodInvokationInsideExpression = Pattern.compile("^.*\\s+([a-zA-Z0-9_]+)\\(.*\\).*$");
+    private Pattern methodInvokarionName = Pattern.compile("([a-zA-Z0-9_]+)\\(");
 
 
 
@@ -168,130 +168,80 @@ public class Application {
             switch (state) {
                 case OUTSIDE_METHOD_DEFINITION:
                     // Check one line
-                    matcher = includePattern.matcher(line);
-                    if (matcher.matches()) {
-                        String includeHeaderFile = matcher.group(1);
-                        cSourceFile.addIncludeHeaderFile(includeHeaderFile);
+                    if (matchIncludeStatement(line, cSourceFile)) {
                         lineMemory = clearMemory();
                         foundMatch = true;
                     }
-                    matcher = methodDeclarationPattern.matcher(line);
-                    if (!foundMatch && matcher.matches()) {
-                        methodName = matcher.group(1);
-                        cSourceFile.addMethodDeclaration(methodName);
+                    else if (matchMethodDeclaration(line, cSourceFile)) {
                         lineMemory = clearMemory();
                         foundMatch = true;
                     }
-
-                    // Find Method Definition
-                    matcher = methodDefinitionPattern.matcher(line);
-                    if (!foundMatch && matcher.matches()) {
-                        methodName = matcher.group(1);
-                        cSourceFile.addMethodImplementation(methodName);
+                    else if (matchMethodDefinition(line, cSourceFile)) {
                         lineMemory = clearMemory();
-                        foundMatch = true;
                         state = STATE.INSIDE_METHOD_DEFINITION;
                         nrOfOpenCurlyBraces = 1;
+                        foundMatch = true;
                     }
-
-                    // Consider two lines
-                    if (!foundMatch && !lineMemory[1].isBlank()) {
+                    else if (!lineMemory[1].isBlank()) {
+                        // Consider two lines
                         String twoLines = lineMemory[1] + " " + lineMemory[0];
-                        matcher = methodDeclarationPattern.matcher(twoLines);
-                        if (!foundMatch && matcher.matches()) {
-                            methodName = matcher.group(1);
-                            cSourceFile.addMethodDeclaration(methodName);
+                        if (matchMethodDeclaration(twoLines, cSourceFile)) {
                             lineMemory = clearMemory();
                             foundMatch = true;
                         }
-
-                        // Find Method Definition
-                        matcher = methodDefinitionPattern.matcher(twoLines);
-                        if (!foundMatch && matcher.matches()) {
-                            methodName = matcher.group(1);
-                            cSourceFile.addMethodImplementation(methodName);
+                        else if (matchMethodDefinition(twoLines, cSourceFile)) {
                             lineMemory = clearMemory();
-                            foundMatch = true;
                             state = STATE.INSIDE_METHOD_DEFINITION;
                             nrOfOpenCurlyBraces = 1;
-                        }
-                    }
-                    if (!foundMatch && !lineMemory[1].isBlank() && !lineMemory[2].isBlank()) {
-                        String threeLines = lineMemory[2] + " " + lineMemory[1] + " " + lineMemory[0];
-
-                        // Find Method Definition
-                        matcher = methodDefinitionPattern.matcher(threeLines);
-                        if (!foundMatch && matcher.matches()) {
-                            methodName = matcher.group(1);
-                            cSourceFile.addMethodImplementation(methodName);
-                            lineMemory = clearMemory();
                             foundMatch = true;
-                            state = STATE.INSIDE_METHOD_DEFINITION;
-                            nrOfOpenCurlyBraces = 1;
+                        }
+                        else if (!lineMemory[1].isBlank() && !lineMemory[2].isBlank()) {
+                            // Consider three lines
+                            String threeLines = lineMemory[2] + " " + lineMemory[1] + " " + lineMemory[0];
+                            if (matchMethodDeclaration(threeLines, cSourceFile)) {
+                                lineMemory = clearMemory();
+                                foundMatch = true;
+                            }
+                            else if (matchMethodDefinition(threeLines, cSourceFile)) {
+                                lineMemory = clearMemory();
+                                state = STATE.INSIDE_METHOD_DEFINITION;
+                                nrOfOpenCurlyBraces = 1;
+                                foundMatch = true;
+                            }
                         }
                     }
-
                     // Try finding dangling braces
-                    matcher = methodCurlyBracesClose.matcher(line);
-                    if (!foundMatch && matcher.matches()) {
+                    if (!foundMatch && matchCurlyBracesClose(line)) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces--;
                     }
-                    matcher = methodCurlyBracesOpen.matcher(line);
-                    if (!foundMatch && matcher.matches()) {
+                    if (!foundMatch && matchCurlyBracesOpen(line)) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces++;
                     }
+
                     break;
                 case INSIDE_METHOD_DEFINITION:
                     // one line
                     boolean foundCurlyrace = false;
-                    matcher = methodCurlyBracesClose.matcher(line);
-                    if (matcher.matches()) {
+                    if (!foundMatch && matchCurlyBracesClose(line)) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces--;
                         foundCurlyrace = true;
                     }
-                    matcher = methodCurlyBracesOpen.matcher(line);
-                    if (matcher.matches()) {
+                    if (!foundMatch && matchCurlyBracesOpen(line)) {
                         lineMemory = clearMemory();
                         nrOfOpenCurlyBraces++;
                         foundCurlyrace = true;
                     }
-                    if (foundCurlyrace) {
-                        foundMatch = true;
-                    }
-
-                    matcher = methodInvokation.matcher(line);
-                    if (!foundMatch && matcher.matches()) {
-                        methodName = matcher.group(1);
-                        cSourceFile.addMethodInvokation(methodName);
-                        lineMemory = clearMemory();
-                        foundMatch = true;
-
-                        String expression = matcher.group(2);
-                        matcher = methodInvokationInsideExpression.matcher(expression);
-                        if (matcher.matches()) {
-                            methodName = matcher.group(1);
-                            cSourceFile.addMethodInvokation(methodName);
-                        }
-                    }
-
-                    // two lines
-                    if (!foundMatch && !lineMemory[1].isBlank()) {
-                        String twoLines = lineMemory[1] + " " + lineMemory[0];
-                        matcher = methodInvokation.matcher(twoLines);
-                        if (matcher.matches()) {
-                            methodName = matcher.group(1);
-                            cSourceFile.addMethodInvokation(methodName);
+                    if (!foundCurlyrace) {
+                        if (matchMethodInvokation(line, cSourceFile)) {
                             lineMemory = clearMemory();
-                            foundMatch = true;
-
-                            String expression = matcher.group(2);
-                            matcher = methodInvokationInsideExpression.matcher(expression);
-                            if (matcher.matches()) {
-                                methodName = matcher.group(1);
-                                cSourceFile.addMethodInvokation(methodName);
+                        }
+                        else if (!foundMatch && !lineMemory[1].isBlank()) {
+                            String twoLines = lineMemory[1] + " " + lineMemory[0];
+                            if (matchMethodInvokation(twoLines, cSourceFile)) {
+                                lineMemory = clearMemory();
                             }
                         }
                     }
@@ -311,6 +261,67 @@ public class Application {
         }
         return cSourceFile;
     }
+
+    boolean matchIncludeStatement(String line, CSourceFile cSourceFile) {
+        Matcher matcher = includePattern.matcher(line);
+        if (matcher.matches()) {
+            String includeHeaderFile = matcher.group(1);
+            cSourceFile.addIncludeHeaderFile(includeHeaderFile);
+            return true;
+        }
+        return false;
+    }
+
+    boolean matchMethodDeclaration(String line, CSourceFile cSourceFile) {
+        Matcher matcher = methodDeclarationPattern.matcher(line);
+        if (matcher.matches()) {
+            String methodName = matcher.group(1);
+            cSourceFile.addMethodDeclaration(methodName);
+            return true;
+        }
+        return false;
+    }
+
+    boolean matchMethodDefinition(String line, CSourceFile cSourceFile) {
+        Matcher matcher = methodDefinitionPattern.matcher(line);
+        if (matcher.matches()) {
+            String methodName = matcher.group(1);
+            cSourceFile.addMethodImplementation(methodName);
+            return true;
+        }
+        return false;
+    }
+
+    boolean matchCurlyBracesClose(String line) {
+        Matcher matcher = methodCurlyBracesClose.matcher(line);
+        if (matcher.matches()) {
+            return true;
+        }
+        return false;
+    }
+
+    boolean matchCurlyBracesOpen(String line) {
+        Matcher matcher = methodCurlyBracesOpen.matcher(line);
+        if (matcher.matches()) {
+            return true;
+        }
+        return false;
+    }
+
+    boolean matchMethodInvokation(String line, CSourceFile cSourceFile) {
+        Matcher matcher = methodInvokation.matcher(line);
+        if (matcher.matches()) {
+            matcher = methodInvokarionName.matcher(line);
+            while (matcher.find()) {
+                String methodName = matcher.group(1);
+                cSourceFile.addMethodInvokation(methodName);
+            }
+            return true;
+        }
+        return false;
+    }
+
+
 
     String[] clearMemory() {
         String[] array = {"", "", ""};

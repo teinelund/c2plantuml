@@ -748,6 +748,27 @@ public class ApplicationTest {
     }
 
     @Test
+    void parseSourceFileWhereFileContainsTwoMethodInvokationsInTheSameLine() {
+        // Initialize
+        List<String> cHeaderFilecontent = List.of(
+                "void some_method(void)",
+                "{",
+                "    preserve = is_really_simple(p) || is_really_simple(q);",
+                "}");
+        // Test
+        CSourceFile result = this.sut.parseSourceFile(cHeaderFilecontent, "");
+        // Verify
+        assertThat(result.getIncludeHeaderFiles().isEmpty()).isTrue();
+        assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
+        CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
+        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(2);
+        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("is_really_simple");
+        assertThat(methodImplementation.getMethodInvokations().get(1)).isEqualTo("is_really_simple");
+    }
+
+    @Test
     void parseSourceFileWhereFileContainValidHeaderFileContent() {
         // Initialize
         List<String> cHeaderFilecontent = List.of(
