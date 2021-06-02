@@ -43,6 +43,7 @@ public class Application {
     Collection<Path> paths;
     Collection<CSourceFile> cHeaderFiles = new ArrayList<>();
     Collection<CSourceFile> cSourceFiles = new ArrayList<>();
+    Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
 
     public static void main(String[] args) {
         Application application = new Application();
@@ -83,6 +84,62 @@ public class Application {
 
         parsePaths();
 
+        weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap);
+
+    }
+
+    void weaveCodeTogher(Collection<CSourceFile> cHeaderFiles, Collection<CSourceFile> cSourceFiles, Map<String, CSourceFile> cSourceFileMap) {
+        // Put all files in the map
+        for (CSourceFile cSourceFile : cHeaderFiles) {
+            cSourceFileMap.put(cSourceFile.getFileName(), cSourceFile);
+        }
+        for (CSourceFile cSourceFile : cSourceFiles) {
+            cSourceFileMap.put(cSourceFile.getFileName(), cSourceFile);
+        }
+
+        // Find corresponding source file for given header file
+        for (CSourceFile cHeaderFile : cHeaderFiles) {
+            String fileName = cHeaderFile.getFileName().replace(".h", ".c");
+            if (cSourceFileMap.containsKey(fileName)) {
+                CSourceFile cSourceFile = cSourceFileMap.get(fileName);
+                cHeaderFile.addSourceFile(cSourceFile);
+            }
+        }
+
+        // Add header files inncluded in source file.
+        for (CSourceFile cSourceFile : cSourceFiles) {
+            for (String headerFile : cSourceFile.getIncludeHeaderFiles()) {
+                if (cSourceFileMap.containsKey(headerFile)) {
+                    CSourceFile cHeaderFile = cSourceFileMap.get(headerFile);
+                    cSourceFile.addHeaderFile(cHeaderFile);
+                }
+            }
+        }
+
+        //
+        // Connect method invokations in method implementations
+        //
+
+        // For each C source implementation file...
+        for (CSourceFile cSourceFile : cSourceFiles) {
+            // for each method implementation in a CSourceFile...
+            for (CMethodImplementation cMethodImplementation : cSourceFile.getMethodDefinitions()) {
+                // for each method invokation name in a method implementation...
+                for (String methodInvokationName : cMethodImplementation.getMethodInvokationNames()) {
+                    // try to find which implementation implements the method invokation.
+                    // For each header file included in the CSourceFile...
+                    for (CSourceFile headerFile : cSourceFile.getHeaderFiles()) {
+                        // for each method implementation in the corresponding CSourceFile for the header file...
+                        for (CMethodImplementation invokedMethodImplementation : headerFile.getcSourceFile().getMethodDefinitions()) {
+
+                            if (invokedMethodImplementation.getName().equals(methodInvokationName)) {
+                                cMethodImplementation.addMethodInvokation(invokedMethodImplementation);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     void parsePaths() throws IOException {
@@ -132,7 +189,7 @@ public class Application {
 
     CSourceFile parseSourceFile(List<String> sourceLines, String fileNameName) {
         String[] lineMemory = clearMemory();
-        CSourceFile cSourceFile = new CSourceFile();
+        CSourceFile cSourceFile = new CSourceFile(fileNameName);
         String methodName = "";
         STATE state = STATE.OUTSIDE_METHOD_DEFINITION;
         int nrOfOpenCurlyBraces = 0;

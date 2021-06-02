@@ -4,8 +4,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -267,7 +271,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "set_default_limits"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "set_default_limits", null))).isTrue();
     }
 
     @Test
@@ -286,7 +290,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "seg_alloc"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "seg_alloc", null))).isTrue();
     }
 
     @Test
@@ -305,7 +309,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_pragma"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_pragma", null))).isTrue();
     }
 
     @Test
@@ -324,7 +328,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "begintemp"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "begintemp", null))).isTrue();
     }
 
     @Test
@@ -343,7 +347,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "process_pragma"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "process_pragma", null))).isTrue();
     }
 
     @Test
@@ -362,7 +366,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "utf8_to_16be"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "utf8_to_16be", null))).isTrue();
     }
 
     @Test
@@ -381,7 +385,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "perm_alloc"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "perm_alloc", null))).isTrue();
     }
 
     @Test
@@ -400,7 +404,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "tok_smac_param"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "tok_smac_param", null))).isTrue();
     }
 
     @Test
@@ -419,7 +423,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "error_where"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "error_where", null))).isTrue();
     }
 
     @Test
@@ -438,7 +442,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "tok_check_len"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "tok_check_len", null))).isTrue();
     }
 
     @Test
@@ -457,7 +461,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "pp_concat_match"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "pp_concat_match", null))).isTrue();
     }
 
     @Test
@@ -476,7 +480,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_error"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "list_error", null))).isTrue();
     }
 
     @Test
@@ -496,7 +500,7 @@ public class ApplicationTest {
 
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         assertThat(result.getMethodDefinitions().size()).isEqualTo(1);
-        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "evaluate"))).isTrue();
+        assertThat(result.getMethodDefinitions().contains(new CMethodImplementation( "evaluate", null))).isTrue();
     }
 
     @Test
@@ -612,9 +616,9 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_free");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("nasm_free");
     }
 
     @Test
@@ -632,9 +636,9 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("finishtemp");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("finishtemp");
     }
 
     @Test
@@ -652,9 +656,9 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("scanfunc");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("scanfunc");
     }
 
     @Test
@@ -674,11 +678,11 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(3);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("begintemp");
-        assertThat(methodImplementation.getMethodInvokations().get(1)).isEqualTo("addtotemp");
-        assertThat(methodImplementation.getMethodInvokations().get(2)).isEqualTo("finishtemp");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(3);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("begintemp");
+        assertThat(methodImplementation.getMethodInvokationNames().get(1)).isEqualTo("addtotemp");
+        assertThat(methodImplementation.getMethodInvokationNames().get(2)).isEqualTo("finishtemp");
     }
 
     @Test
@@ -697,9 +701,9 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("addtotemp");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("addtotemp");
     }
 
     @Test
@@ -720,9 +724,9 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(1);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_realloc");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(1);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("nasm_realloc");
     }
 
     @Test
@@ -741,10 +745,10 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(2);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("nasm_realloc");
-        assertThat(methodImplementation.getMethodInvokations().get(1)).isEqualTo("sizeof");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(2);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("nasm_realloc");
+        assertThat(methodImplementation.getMethodInvokationNames().get(1)).isEqualTo("sizeof");
     }
 
     @Test
@@ -762,10 +766,10 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().isEmpty()).isTrue();
         assertThat(result.getMethodDefinitions().isEmpty()).isFalse();
         CMethodImplementation methodImplementation = result.getMethodDefinitions().get(0);
-        assertThat(methodImplementation.getMethodInvokations().isEmpty()).isFalse();
-        assertThat(methodImplementation.getMethodInvokations().size()).isEqualTo(2);
-        assertThat(methodImplementation.getMethodInvokations().get(0)).isEqualTo("is_really_simple");
-        assertThat(methodImplementation.getMethodInvokations().get(1)).isEqualTo("is_really_simple");
+        assertThat(methodImplementation.getMethodInvokationNames().isEmpty()).isFalse();
+        assertThat(methodImplementation.getMethodInvokationNames().size()).isEqualTo(2);
+        assertThat(methodImplementation.getMethodInvokationNames().get(0)).isEqualTo("is_really_simple");
+        assertThat(methodImplementation.getMethodInvokationNames().get(1)).isEqualTo("is_really_simple");
     }
 
     @Test
@@ -798,5 +802,98 @@ public class ApplicationTest {
         assertThat(result.getMethodDeclarations().size()).isEqualTo(2);
         assertThat(result.getMethodDeclarations().get(0).getName()).isEqualTo("nasm_quote");
         assertThat(result.getMethodDeclarations().get(1).getName()).isEqualTo("nasm_unquote");
+    }
+
+    @Test
+    void weaveCodeTogherWhereAllCollectionsAreEmpty() {
+        // Initialize
+        Collection<CSourceFile> cHeaderFiles = new ArrayList<>();
+        Collection<CSourceFile> cSourceFiles = new ArrayList<>();
+        Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        // Test
+        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap);
+        // Verify
+        assertThat(cHeaderFiles.isEmpty()).isTrue();
+        assertThat(cSourceFiles.isEmpty()).isTrue();
+        assertThat(cSourceFileMap.isEmpty()).isTrue();
+    }
+
+    @Test
+    void weaveCodeTogherWithTwoHeaderAndSourceFiles() {
+        // Initialize
+        List<CSourceFile> cHeaderFiles = createHeaderFiles();
+        List<CSourceFile> cSourceFiles = createImplementationFiles();
+        Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        // Test
+        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap);
+        // Verify
+        assertThat(cHeaderFiles.size()).isEqualTo(2);
+        assertThat(cSourceFiles.size()).isEqualTo(2);
+
+        CSourceFile resultOrderC = cSourceFiles.get(0);
+        assertThat(resultOrderC.getFileName()).isEqualTo("order.c");
+        assertThat(resultOrderC.getHeaderFiles().size()).isEqualTo(1);
+        CSourceFile resultOrderH = resultOrderC.getHeaderFiles().get(0);
+        assertThat(resultOrderH.getFileName()).isEqualTo("order.h");
+        assertThat(resultOrderC.getcSourceFile()).isNull();
+        assertThat(resultOrderC.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(resultOrderC.getMethodDefinitions().size()).isEqualTo(2);
+        CMethodImplementation resultCreaterOrderMethodImpl = resultOrderC.getMethodDefinitions().get(0);
+        assertThat(resultCreaterOrderMethodImpl.getName()).isEqualTo("createOrder");
+        assertThat(resultCreaterOrderMethodImpl.getMethodInvokationNames().isEmpty()).isTrue();
+        assertThat(resultCreaterOrderMethodImpl.getSourceFile()).isSameAs(resultOrderC);
+
+        CMethodImplementation resultInitializeOrderMethodImpl = resultOrderC.getMethodDefinitions().get(1);
+        assertThat(resultInitializeOrderMethodImpl.getName()).isEqualTo("initializeOrder");
+        assertThat(resultInitializeOrderMethodImpl.getMethodInvokationNames().isEmpty()).isTrue();
+        assertThat(resultInitializeOrderMethodImpl.getSourceFile()).isSameAs(resultOrderC);
+
+        CSourceFile resultOrderEngineC = cSourceFiles.get(1);
+        assertThat(resultOrderEngineC.getFileName()).isEqualTo("orderengine.c");
+        assertThat(resultOrderEngineC.getHeaderFiles().size()).isEqualTo(2);
+        CSourceFile resultOrderH2 = resultOrderEngineC.getHeaderFiles().get(0);
+        assertThat(resultOrderH2.getFileName()).isEqualTo("order.h");
+        assertThat(resultOrderH2).isSameAs(resultOrderH);
+        CSourceFile resultOrderEngineH = resultOrderEngineC.getHeaderFiles().get(1);
+        assertThat(resultOrderEngineH.getFileName()).isEqualTo("orderengine.h");
+
+        assertThat(resultOrderEngineC.getcSourceFile()).isNull();
+        assertThat(resultOrderEngineC.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(resultOrderEngineC.getMethodDefinitions().size()).isEqualTo(1);
+        CMethodImplementation resultProcessOrdersMethodImpl = resultOrderEngineC.getMethodDefinitions().get(0);
+        assertThat(resultProcessOrdersMethodImpl.getName()).isEqualTo("processOrders");
+        assertThat(resultProcessOrdersMethodImpl.getSourceFile()).isSameAs(resultOrderEngineC);
+        assertThat(resultProcessOrdersMethodImpl.getMethodInvokations().size()).isEqualTo(2);
+        assertThat(resultProcessOrdersMethodImpl.getMethodInvokations().get(0)).isSameAs(resultCreaterOrderMethodImpl);
+        assertThat(resultProcessOrdersMethodImpl.getMethodInvokations().get(1)).isSameAs(resultInitializeOrderMethodImpl);
+    }
+
+    private List<CSourceFile> createHeaderFiles() {
+        List<CSourceFile> cHeaderFiles = new ArrayList<>();
+        CSourceFile headerFile = new CSourceFile("order.h");
+        headerFile.addMethodDeclaration("createOrder");
+        headerFile.addMethodDeclaration("initializeOrder");
+        cHeaderFiles.add(headerFile);
+        headerFile = new CSourceFile("orderengine.h");
+        headerFile.addMethodDeclaration("processOrders");
+        cHeaderFiles.add(headerFile);
+        return cHeaderFiles;
+    }
+
+    private List<CSourceFile> createImplementationFiles() {
+        List<CSourceFile> cSourceFiles = new ArrayList<>();
+        CSourceFile cSourceFile = new CSourceFile("order.c");
+        cSourceFile.addIncludeHeaderFile("order.h");
+        cSourceFile.addMethodImplementation("createOrder");
+        cSourceFile.addMethodImplementation("initializeOrder");
+        cSourceFiles.add(cSourceFile);
+        cSourceFile = new CSourceFile("orderengine.c");
+        cSourceFile.addIncludeHeaderFile("order.h");
+        cSourceFile.addIncludeHeaderFile("orderengine.h");
+        cSourceFile.addMethodImplementation("processOrders");
+        cSourceFile.addMethodInvokation("createOrder");
+        cSourceFile.addMethodInvokation("initializeOrder");
+        cSourceFiles.add(cSourceFile);
+        return cSourceFiles;
     }
 }

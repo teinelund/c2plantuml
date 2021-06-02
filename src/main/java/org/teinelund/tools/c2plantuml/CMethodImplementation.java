@@ -1,17 +1,20 @@
 package org.teinelund.tools.c2plantuml;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class CMethodImplementation {
 
     private String name;
-    private List<String> methodInvokations = new ArrayList<>();
+    private CSourceFile cSourceFile;
+    private List<String> methodInvokationNames = new ArrayList<>();
+    private List<CMethodImplementation> methodInvokations = new ArrayList<>();
 
-    public CMethodImplementation(String methodName) {
+    public CMethodImplementation(String methodName, CSourceFile cSourceFile) {
         this.name = methodName;
+        this.cSourceFile = cSourceFile;
     }
 
     @Override
@@ -26,11 +29,27 @@ public class CMethodImplementation {
         return name == null ? other.name == null : name.equals(other.name);
     }
 
-    public void addMethodInvokation(String methodName) {
-        methodInvokations.add(methodName);
+    public CSourceFile getSourceFile() {
+        return this.cSourceFile;
     }
 
-    public List<String> getMethodInvokations() {
+    public String getName() {
+        return name;
+    }
+
+    public void addMethodInvokation(String methodName) {
+        methodInvokationNames.add(methodName);
+    }
+
+    public List<String> getMethodInvokationNames() {
+        return Collections.unmodifiableList(methodInvokationNames);
+    }
+
+    public void addMethodInvokation(CMethodImplementation cMethodImplementation) {
+        methodInvokations.add(cMethodImplementation);
+    }
+
+    public List<CMethodImplementation> getMethodInvokations() {
         return Collections.unmodifiableList(methodInvokations);
     }
 }
