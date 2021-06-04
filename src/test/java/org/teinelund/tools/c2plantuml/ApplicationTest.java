@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ApplicationTest {
 
@@ -810,8 +812,10 @@ public class ApplicationTest {
         Collection<CSourceFile> cHeaderFiles = new ArrayList<>();
         Collection<CSourceFile> cSourceFiles = new ArrayList<>();
         Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        String startingMethodName = "";
+        String implementingSourceFileName = "";
         // Test
-        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap);
+        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
         // Verify
         assertThat(cHeaderFiles.isEmpty()).isTrue();
         assertThat(cSourceFiles.isEmpty()).isTrue();
@@ -821,11 +825,14 @@ public class ApplicationTest {
     @Test
     void weaveCodeTogherWithTwoHeaderAndSourceFiles() {
         // Initialize
-        List<CSourceFile> cHeaderFiles = createHeaderFiles();
-        List<CSourceFile> cSourceFiles = createImplementationFiles();
+        List<CSourceFile> cHeaderFiles = createHeaderFiles(SourceFileState.TWO_SOURCE_FILES);
+        List<CSourceFile> cSourceFiles = createImplementationFiles(SourceFileState.TWO_SOURCE_FILES);
         Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        String startingMethodName = "processOrders";
+        String implementingSourceFileName = "";
         // Test
-        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap);
+        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+                implementingSourceFileName);
         // Verify
         assertThat(cHeaderFiles.size()).isEqualTo(2);
         assertThat(cSourceFiles.size()).isEqualTo(2);
@@ -868,7 +875,57 @@ public class ApplicationTest {
         assertThat(resultProcessOrdersMethodImpl.getMethodInvokations().get(1)).isSameAs(resultInitializeOrderMethodImpl);
     }
 
-    private List<CSourceFile> createHeaderFiles() {
+    @Test
+    void weaveCodeTogherWithTwoHeaderAndSourceFilesWhereStartingMethodNameExistAndIsUnique() {
+        // Initialize
+        List<CSourceFile> cHeaderFiles = createHeaderFiles(SourceFileState.TWO_SOURCE_FILES);
+        List<CSourceFile> cSourceFiles = createImplementationFiles(SourceFileState.TWO_SOURCE_FILES);
+        Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        String startingMethodName = "processOrders";
+        String implementingSourceFileName = "";
+        // Test
+        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+                implementingSourceFileName);
+        // Verify
+        assertThat(this.sut.getStartingMethod()).isNotNull();
+        assertThat(this.sut.getStartingMethod().getName()).isEqualTo("processOrders");
+    }
+
+    @Test
+    void weaveCodeTogherWithTwoHeaderAndSourceFilesWhereStartingMethodNameExistButIsNotUnique() {
+        // Initialize
+        List<CSourceFile> cHeaderFiles = createHeaderFiles(SourceFileState.THREE_SOURCE_FILES);
+        List<CSourceFile> cSourceFiles = createImplementationFiles(SourceFileState.THREE_SOURCE_FILES);
+        Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        String startingMethodName = "processOrders";
+        String implementingSourceFileName = "";
+        // Test and verify
+        Exception exception = assertThrows(IllegalStateException.class, () -> {
+            this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+                    implementingSourceFileName);
+            fail("IllegalStateException was expected to be thrown.");
+        });
+    }
+
+    @Test
+    void weaveCodeTogherWithTwoHeaderAndSourceFilesWhereStartingMethodNameExistAndIsUnique_2() {
+        // Initialize
+        List<CSourceFile> cHeaderFiles = createHeaderFiles(SourceFileState.THREE_SOURCE_FILES);
+        List<CSourceFile> cSourceFiles = createImplementationFiles(SourceFileState.THREE_SOURCE_FILES);
+        Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        String startingMethodName = "processOrders";
+        String implementingSourceFileName = "orderengine.c";
+        // Test
+        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+                implementingSourceFileName);
+        // Verify
+        assertThat(this.sut.getStartingMethod()).isNotNull();
+        assertThat(this.sut.getStartingMethod().getName()).isEqualTo("processOrders");
+    }
+
+    enum SourceFileState {TWO_SOURCE_FILES, THREE_SOURCE_FILES};
+
+    private List<CSourceFile> createHeaderFiles(SourceFileState sourceFileState) {
         List<CSourceFile> cHeaderFiles = new ArrayList<>();
         CSourceFile headerFile = new CSourceFile("order.h");
         headerFile.addMethodDeclaration("createOrder");
@@ -877,10 +934,15 @@ public class ApplicationTest {
         headerFile = new CSourceFile("orderengine.h");
         headerFile.addMethodDeclaration("processOrders");
         cHeaderFiles.add(headerFile);
+        if (sourceFileState == SourceFileState.THREE_SOURCE_FILES) {
+            headerFile = new CSourceFile("orderstatistics.h");
+            headerFile.addMethodDeclaration("processOrders");
+            cHeaderFiles.add(headerFile);
+        }
         return cHeaderFiles;
     }
 
-    private List<CSourceFile> createImplementationFiles() {
+    private List<CSourceFile> createImplementationFiles(SourceFileState sourceFileState) {
         List<CSourceFile> cSourceFiles = new ArrayList<>();
         CSourceFile cSourceFile = new CSourceFile("order.c");
         cSourceFile.addIncludeHeaderFile("order.h");
@@ -894,6 +956,15 @@ public class ApplicationTest {
         cSourceFile.addMethodInvokation("createOrder");
         cSourceFile.addMethodInvokation("initializeOrder");
         cSourceFiles.add(cSourceFile);
+        if (sourceFileState == SourceFileState.THREE_SOURCE_FILES) {
+            cSourceFile = new CSourceFile("orderstatistics.c");
+            cSourceFile.addIncludeHeaderFile("order.h");
+            cSourceFile.addIncludeHeaderFile("orderstatistics.h");
+            cSourceFile.addMethodImplementation("processOrders");
+            cSourceFile.addMethodInvokation("createOrder");
+            cSourceFile.addMethodInvokation("initializeOrder");
+            cSourceFiles.add(cSourceFile);
+        }
         return cSourceFiles;
     }
 }

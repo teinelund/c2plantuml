@@ -23,11 +23,22 @@ import java.util.stream.Stream;
  */
 public class Application {
 
-    @Parameter(names = { "-i", "--input" }, description = "Directory containing c source code to be analyzed. Mandatory.", order = 1)
+    @Parameter(names = { "-i", "--input" }, description = "Directory containing c source code to be analyzed. Mandatory.",
+            order = 1)
     private String input = "";
 
-    @Parameter(names = { "-o", "--output" }, description = "Output file path to store plant UML content. Mandatory.", order = 2)
+    @Parameter(names = { "-o", "--output" }, description = "Output file path to store plant UML content. Mandatory.",
+            order = 2)
     private String output = "";
+
+    @Parameter(names = { "-m", "--method" }, description = "Method name to start the UML sequence diagram. Default " +
+            "method name is 'main' and aims at the method 'void main(char* args)'. Optional.", order = 3)
+    private String startingMethodName = "main";
+
+    @Parameter(names = { "-s", "--source"}, description = "Source file name, where the method (given by the option " +
+            "--method) reside. If method name is unique, source is optional. If method name is not unique, source is " +
+            "mandatory. Example \"--source order.c\".", order = 4)
+    private String implementingSourceFileName = "";
 
     @Parameter(names = { "-v", "--verbose" }, description = "Verbose output.", order = 50)
     private boolean verbose = false;
@@ -44,6 +55,7 @@ public class Application {
     Collection<CSourceFile> cHeaderFiles = new ArrayList<>();
     Collection<CSourceFile> cSourceFiles = new ArrayList<>();
     Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+    CMethodImplementation startMethod = null;
 
     public static void main(String[] args) {
         Application application = new Application();
@@ -84,11 +96,23 @@ public class Application {
 
         parsePaths();
 
-        weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap);
+        weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
+
+        createPlantUmlContent();
 
     }
 
-    void weaveCodeTogher(Collection<CSourceFile> cHeaderFiles, Collection<CSourceFile> cSourceFiles, Map<String, CSourceFile> cSourceFileMap) {
+    void createPlantUmlContent() {
+
+    }
+
+    void weaveCodeTogher(Collection<CSourceFile> cHeaderFiles, Collection<CSourceFile> cSourceFiles,
+                         Map<String, CSourceFile> cSourceFileMap, String startingMethodName,
+                         String implementingSourceFileName) {
+        if (cSourceFiles.isEmpty()) {
+            return;
+        }
+
         // Put all files in the map
         for (CSourceFile cSourceFile : cHeaderFiles) {
             cSourceFileMap.put(cSourceFile.getFileName(), cSourceFile);
@@ -106,7 +130,7 @@ public class Application {
             }
         }
 
-        // Add header files inncluded in source file.
+        // Add header files included in source file.
         for (CSourceFile cSourceFile : cSourceFiles) {
             for (String headerFile : cSourceFile.getIncludeHeaderFiles()) {
                 if (cSourceFileMap.containsKey(headerFile)) {
@@ -124,6 +148,32 @@ public class Application {
         for (CSourceFile cSourceFile : cSourceFiles) {
             // for each method implementation in a CSourceFile...
             for (CMethodImplementation cMethodImplementation : cSourceFile.getMethodDefinitions()) {
+
+                // Found starting method?
+                boolean isStoreMethodImplementation = false;
+                if (cMethodImplementation.getName().equals(startingMethodName)) {
+                    if (implementingSourceFileName.isBlank()) {
+                        isStoreMethodImplementation = true;
+                    }
+                    else {
+                        if (cSourceFile.getFileName().equals(implementingSourceFileName)) {
+                            isStoreMethodImplementation = true;
+                        }
+                    }
+                    if (isStoreMethodImplementation) {
+                        if (Objects.isNull(this.startMethod)) {
+                            this.startMethod = cMethodImplementation;
+                        } else {
+                            if (implementingSourceFileName.isBlank()) {
+                                throw new IllegalStateException("Method '" + startingMethodName + "' is not unique.");
+                            }
+                            else {
+                                throw new IllegalStateException("Method '" + startingMethodName + "' is not unique. Source name contains: '" + implementingSourceFileName + "'. Check spelling.");
+                            }
+                        }
+                    }
+                }
+
                 // for each method invokation name in a method implementation...
                 for (String methodInvokationName : cMethodImplementation.getMethodInvokationNames()) {
                     // try to find which implementation implements the method invokation.
@@ -135,11 +185,20 @@ public class Application {
                             if (invokedMethodImplementation.getName().equals(methodInvokationName)) {
                                 cMethodImplementation.addMethodInvokation(invokedMethodImplementation);
                             }
+
                         }
                     }
                 }
             }
         }
+
+        if (Objects.isNull(this.startMethod)) {
+            throw new IllegalStateException("Method '" + startingMethodName + "' is not found.");
+        }
+    }
+
+    CMethodImplementation getStartingMethod() {
+        return this.startMethod;
     }
 
     void parsePaths() throws IOException {
