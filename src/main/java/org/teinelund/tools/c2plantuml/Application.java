@@ -56,6 +56,7 @@ public class Application {
     Collection<CSourceFile> cSourceFiles = new ArrayList<>();
     Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
     CMethodImplementation startMethod = null;
+    String plantUmlContent = "";
 
     public static void main(String[] args) {
         Application application = new Application();
@@ -67,7 +68,7 @@ public class Application {
         jc.parse(args);
 
         try {
-            application.execute(args, jc);
+            application.execute(jc);
         }
         catch(Exception e) {
             printError(e.getMessage());
@@ -75,7 +76,7 @@ public class Application {
         }
     }
 
-    public void execute(String[] args, JCommander jc) throws IOException {
+    public void execute(JCommander jc) throws IOException {
         if (help || version) {
             if (help) {
                 jc.usage();
@@ -96,19 +97,43 @@ public class Application {
 
         parsePaths();
 
-        weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
+        weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
 
         createPlantUmlContent();
 
+        savePlantUmlContent();
+    }
+
+    private void savePlantUmlContent() throws IOException {
+        printVerbose("Save PlantUML Content.");
+        Files.writeString(this.outputPath, this.plantUmlContent, StandardCharsets.UTF_8);
     }
 
     void createPlantUmlContent() {
-
+        printVerbose("Create PlantUML Content.");
+        StringBuilder plantUmlContent = new StringBuilder();
+        plantUmlContent.append("@startuml"); plantUmlContent.append(System.lineSeparator());
+        plantUmlContent.append("autoactivate on"); plantUmlContent.append(System.lineSeparator());
+        plantUmlContent.append("actor Invoker"); plantUmlContent.append(System.lineSeparator());
+        createPlantUmlContentMethod(plantUmlContent, "Invoker", this.startMethod);
+        plantUmlContent.append("@enduml"); plantUmlContent.append(System.lineSeparator());
+        this.plantUmlContent = plantUmlContent.toString();
     }
 
-    void weaveCodeTogher(Collection<CSourceFile> cHeaderFiles, Collection<CSourceFile> cSourceFiles,
-                         Map<String, CSourceFile> cSourceFileMap, String startingMethodName,
-                         String implementingSourceFileName) {
+    void createPlantUmlContentMethod(StringBuilder plantUmlContent, String source, CMethodImplementation cMethodImplementation) {
+        plantUmlContent.append(source + " -> " + cMethodImplementation.getSourceFile().getFileName() + " ++ : " +
+                cMethodImplementation.getName()); plantUmlContent.append(System.lineSeparator());
+        for (CMethodImplementation invokedMethod : cMethodImplementation.getMethodInvokations()) {
+            createPlantUmlContentMethod(plantUmlContent, cMethodImplementation.getSourceFile().getFileName(), invokedMethod);
+        }
+        plantUmlContent.append(cMethodImplementation.getSourceFile().getFileName() + " --> " + source); plantUmlContent.append(System.lineSeparator());
+    }
+
+    void weaveCodeTogether(Collection<CSourceFile> cHeaderFiles, Collection<CSourceFile> cSourceFiles,
+                           Map<String, CSourceFile> cSourceFileMap, String startingMethodName,
+                           String implementingSourceFileName) {
+        printVerbose("Wave Code Together.");
+
         if (cSourceFiles.isEmpty()) {
             return;
         }
@@ -180,12 +205,14 @@ public class Application {
                     // For each header file included in the CSourceFile...
                     for (CSourceFile headerFile : cSourceFile.getHeaderFiles()) {
                         // for each method implementation in the corresponding CSourceFile for the header file...
-                        for (CMethodImplementation invokedMethodImplementation : headerFile.getcSourceFile().getMethodDefinitions()) {
+                        if (!Objects.isNull(headerFile.getcSourceFile())) {
+                            for (CMethodImplementation invokedMethodImplementation : headerFile.getcSourceFile().getMethodDefinitions()) {
 
-                            if (invokedMethodImplementation.getName().equals(methodInvokationName)) {
-                                cMethodImplementation.addMethodInvokation(invokedMethodImplementation);
+                                if (invokedMethodImplementation.getName().equals(methodInvokationName)) {
+                                    cMethodImplementation.addMethodInvokation(invokedMethodImplementation);
+                                }
+
                             }
-
                         }
                     }
                 }
@@ -202,6 +229,7 @@ public class Application {
     }
 
     void parsePaths() throws IOException {
+        printVerbose("Parse Paths.");
         Map<String, CSourceFile> cFileEntityMap = new HashMap<>();
         for (Path path : paths) {
             parsePath(path);
@@ -209,6 +237,7 @@ public class Application {
     }
 
     void parsePath(Path path) throws IOException {
+        printVerbose("Parse Path.");
         Path fileName = path.getFileName();
         String fileNameName = fileName.toString();
         List<String> sourceLines = Files.readAllLines(path, StandardCharsets.ISO_8859_1);
@@ -247,6 +276,7 @@ public class Application {
 
 
     CSourceFile parseSourceFile(List<String> sourceLines, String fileNameName) {
+        printVerbose("Parse Source File: " + fileNameName + ".");
         String[] lineMemory = clearMemory();
         CSourceFile cSourceFile = new CSourceFile(fileNameName);
         String methodName = "";

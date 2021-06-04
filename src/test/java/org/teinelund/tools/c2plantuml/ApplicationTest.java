@@ -815,7 +815,7 @@ public class ApplicationTest {
         String startingMethodName = "";
         String implementingSourceFileName = "";
         // Test
-        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
+        this.sut.weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
         // Verify
         assertThat(cHeaderFiles.isEmpty()).isTrue();
         assertThat(cSourceFiles.isEmpty()).isTrue();
@@ -831,7 +831,7 @@ public class ApplicationTest {
         String startingMethodName = "processOrders";
         String implementingSourceFileName = "";
         // Test
-        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+        this.sut.weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
                 implementingSourceFileName);
         // Verify
         assertThat(cHeaderFiles.size()).isEqualTo(2);
@@ -884,7 +884,7 @@ public class ApplicationTest {
         String startingMethodName = "processOrders";
         String implementingSourceFileName = "";
         // Test
-        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+        this.sut.weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
                 implementingSourceFileName);
         // Verify
         assertThat(this.sut.getStartingMethod()).isNotNull();
@@ -901,7 +901,7 @@ public class ApplicationTest {
         String implementingSourceFileName = "";
         // Test and verify
         Exception exception = assertThrows(IllegalStateException.class, () -> {
-            this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+            this.sut.weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
                     implementingSourceFileName);
             fail("IllegalStateException was expected to be thrown.");
         });
@@ -916,7 +916,7 @@ public class ApplicationTest {
         String startingMethodName = "processOrders";
         String implementingSourceFileName = "orderengine.c";
         // Test
-        this.sut.weaveCodeTogher(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+        this.sut.weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
                 implementingSourceFileName);
         // Verify
         assertThat(this.sut.getStartingMethod()).isNotNull();
