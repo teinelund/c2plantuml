@@ -202,6 +202,14 @@ public class Application {
                 // for each method invokation name in a method implementation...
                 for (String methodInvokationName : cMethodImplementation.getMethodInvokationNames()) {
                     // try to find which implementation implements the method invokation.
+
+                    // Try first the current source file
+                    for (CMethodImplementation cMethodImplementation2 : cSourceFile.getMethodDefinitions()) {
+                        if (cMethodImplementation2.getName().equals(methodInvokationName)) {
+                            cMethodImplementation.addMethodInvokation(cMethodImplementation2);
+                        }
+                    }
+
                     // For each header file included in the CSourceFile...
                     for (CSourceFile headerFile : cSourceFile.getHeaderFiles()) {
                         // for each method implementation in the corresponding CSourceFile for the header file...

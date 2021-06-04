@@ -923,7 +923,42 @@ public class ApplicationTest {
         assertThat(this.sut.getStartingMethod().getName()).isEqualTo("processOrders");
     }
 
-    enum SourceFileState {TWO_SOURCE_FILES, THREE_SOURCE_FILES};
+    @Test
+    void weaveCodeTogherWhereMethodInvokationsInTheSameSourceFile() {
+        // Initialize
+        List<CSourceFile> cHeaderFiles = Collections.emptyList();
+        List<CSourceFile> cSourceFiles = createImplementationFiles(SourceFileState.ONE_SOURCE_FILE);
+        Map<String, CSourceFile> cSourceFileMap = new HashMap<>();
+        String startingMethodName = "processOrders";
+        String implementingSourceFileName = "";
+        // Test
+        this.sut.weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName,
+                implementingSourceFileName);
+        // Verify
+        assertThat(cHeaderFiles.isEmpty()).isTrue();
+        assertThat(cSourceFiles.size()).isEqualTo(1);
+
+        CSourceFile resultOrderEngineC = cSourceFiles.get(0);
+        assertThat(resultOrderEngineC.getFileName()).isEqualTo("orderengine.c");
+        assertThat(resultOrderEngineC.getHeaderFiles().isEmpty()).isTrue();
+
+        assertThat(resultOrderEngineC.getcSourceFile()).isNull();
+        assertThat(resultOrderEngineC.getMethodDeclarations().isEmpty()).isTrue();
+        assertThat(resultOrderEngineC.getMethodDefinitions().size()).isEqualTo(2);
+        CMethodImplementation resultProcessOrdersMethodImpl = resultOrderEngineC.getMethodDefinitions().get(0);
+        CMethodImplementation resultCreateOrderMethodImpl = resultOrderEngineC.getMethodDefinitions().get(1);
+        assertThat(resultProcessOrdersMethodImpl.getName()).isEqualTo("processOrders");
+        assertThat(resultProcessOrdersMethodImpl.getSourceFile()).isSameAs(resultOrderEngineC);
+        assertThat(resultProcessOrdersMethodImpl.getMethodInvokations().size()).isEqualTo(1);
+        CMethodImplementation resultCreateOrderMethodImpl2 = resultProcessOrdersMethodImpl.getMethodInvokations().get(0);
+        assertThat(resultCreateOrderMethodImpl).isSameAs(resultCreateOrderMethodImpl2);
+
+        assertThat(resultCreateOrderMethodImpl.getName()).isEqualTo("createOrder");
+        assertThat(resultCreateOrderMethodImpl.getSourceFile()).isSameAs(resultOrderEngineC);
+        assertThat(resultCreateOrderMethodImpl.getMethodInvokations().isEmpty()).isTrue();
+    }
+
+    enum SourceFileState {TWO_SOURCE_FILES, THREE_SOURCE_FILES, ONE_SOURCE_FILE};
 
     private List<CSourceFile> createHeaderFiles(SourceFileState sourceFileState) {
         List<CSourceFile> cHeaderFiles = new ArrayList<>();
@@ -943,28 +978,44 @@ public class ApplicationTest {
     }
 
     private List<CSourceFile> createImplementationFiles(SourceFileState sourceFileState) {
-        List<CSourceFile> cSourceFiles = new ArrayList<>();
-        CSourceFile cSourceFile = new CSourceFile("order.c");
-        cSourceFile.addIncludeHeaderFile("order.h");
-        cSourceFile.addMethodImplementation("createOrder");
-        cSourceFile.addMethodImplementation("initializeOrder");
-        cSourceFiles.add(cSourceFile);
-        cSourceFile = new CSourceFile("orderengine.c");
-        cSourceFile.addIncludeHeaderFile("order.h");
-        cSourceFile.addIncludeHeaderFile("orderengine.h");
-        cSourceFile.addMethodImplementation("processOrders");
-        cSourceFile.addMethodInvokation("createOrder");
-        cSourceFile.addMethodInvokation("initializeOrder");
-        cSourceFiles.add(cSourceFile);
-        if (sourceFileState == SourceFileState.THREE_SOURCE_FILES) {
-            cSourceFile = new CSourceFile("orderstatistics.c");
+        if (sourceFileState == SourceFileState.ONE_SOURCE_FILE) {
+            List<CSourceFile> cSourceFiles = new ArrayList<>();
+            CSourceFile cSourceFile = new CSourceFile("orderengine.c");
+            cSourceFile.addIncludeHeaderFile("stdlib.h");
+            cSourceFile.addMethodImplementation("processOrders");
+            cSourceFile.addMethodInvokation("log");
+            cSourceFile.addMethodInvokation("createOrder");
+            cSourceFile.addMethodInvokation("printf");
+            cSourceFile.addMethodImplementation("createOrder");
+            cSourceFile.addMethodInvokation("log");
+            cSourceFile.addMethodInvokation("printf");
+            cSourceFiles.add(cSourceFile);
+            return cSourceFiles;
+        }
+        else {
+            List<CSourceFile> cSourceFiles = new ArrayList<>();
+            CSourceFile cSourceFile = new CSourceFile("order.c");
             cSourceFile.addIncludeHeaderFile("order.h");
-            cSourceFile.addIncludeHeaderFile("orderstatistics.h");
+            cSourceFile.addMethodImplementation("createOrder");
+            cSourceFile.addMethodImplementation("initializeOrder");
+            cSourceFiles.add(cSourceFile);
+            cSourceFile = new CSourceFile("orderengine.c");
+            cSourceFile.addIncludeHeaderFile("order.h");
+            cSourceFile.addIncludeHeaderFile("orderengine.h");
             cSourceFile.addMethodImplementation("processOrders");
             cSourceFile.addMethodInvokation("createOrder");
             cSourceFile.addMethodInvokation("initializeOrder");
             cSourceFiles.add(cSourceFile);
+            if (sourceFileState == SourceFileState.THREE_SOURCE_FILES) {
+                cSourceFile = new CSourceFile("orderstatistics.c");
+                cSourceFile.addIncludeHeaderFile("order.h");
+                cSourceFile.addIncludeHeaderFile("orderstatistics.h");
+                cSourceFile.addMethodImplementation("processOrders");
+                cSourceFile.addMethodInvokation("createOrder");
+                cSourceFile.addMethodInvokation("initializeOrder");
+                cSourceFiles.add(cSourceFile);
+            }
+            return cSourceFiles;
         }
-        return cSourceFiles;
     }
 }
