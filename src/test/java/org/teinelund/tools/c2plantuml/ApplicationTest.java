@@ -1018,4 +1018,59 @@ public class ApplicationTest {
             return cSourceFiles;
         }
     }
+
+    @Test
+    public void createPlantUmlContentWithTwoMethodsOneInvokeTheOther() {
+        // Initialize
+        CMethodImplementation startMethod = createStartMethod();
+        // Test
+        this.sut.createPlantUmlContent(startMethod);
+        // Verify
+        //System.out.println(this.sut.getPlantUmlContent());
+        String result = this.sut.getPlantUmlContent();
+        assertThat(result).contains("Invoker -> orderengine.c ++ : createOrder");
+        assertThat(result).contains("orderengine.c -> order.c ++ : initOrder");
+    }
+
+    CMethodImplementation createStartMethod() {
+        CSourceFile orderEngineSourceFile = new CSourceFile("orderengine.c");
+        CMethodImplementation startMethod = new CMethodImplementation("createOrder", orderEngineSourceFile);
+        CSourceFile orderSourceFile = new CSourceFile("order.c");
+        CMethodImplementation initOrderMethod = new CMethodImplementation("initOrder", orderSourceFile);
+        startMethod.addMethodInvokation(initOrderMethod);
+        return startMethod;
+    }
+
+    @Test
+    public void createPlantUmlContentWithThreeMethodsCyclicInvokation() {
+        // Initialize
+        CMethodImplementation startMethod = createStartMethodCyclicInvokation();
+        // Test
+        this.sut.createPlantUmlContent(startMethod);
+        // Verify
+        //System.out.println(this.sut.getPlantUmlContent());
+        String result = this.sut.getPlantUmlContent();
+        int nrOfMatches = 0;
+        int index = 0;
+        while(index >= 0) {
+            index = result.indexOf(": parse", index + 1);
+            if (index >= 0) {
+                nrOfMatches++;
+            }
+        }
+        assertThat(nrOfMatches).isEqualTo(2);
+    }
+
+    CMethodImplementation createStartMethodCyclicInvokation() {
+        CSourceFile TokenSourceFile = new CSourceFile("token.c");
+        CMethodImplementation gettokenMethod = new CMethodImplementation("gettoken", TokenSourceFile);
+        CSourceFile parserSourceFile = new CSourceFile("parser.c");
+        CMethodImplementation parseMethod = new CMethodImplementation("parse", parserSourceFile);
+        CSourceFile astSourceFile = new CSourceFile("ast.c");
+        CMethodImplementation buildAstMethod = new CMethodImplementation("buildast", astSourceFile);
+        parseMethod.addMethodInvokation(gettokenMethod);
+        gettokenMethod.addMethodInvokation(buildAstMethod);
+        buildAstMethod.addMethodInvokation(parseMethod);
+        return parseMethod;
+    }
 }

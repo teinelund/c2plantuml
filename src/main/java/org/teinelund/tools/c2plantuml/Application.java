@@ -99,34 +99,72 @@ public class Application {
 
         weaveCodeTogether(cHeaderFiles, cSourceFiles, cSourceFileMap, startingMethodName, implementingSourceFileName);
 
-        createPlantUmlContent();
+        //printAST();
+
+        createPlantUmlContent(this.startMethod);
 
         savePlantUmlContent();
     }
 
-    private void savePlantUmlContent() throws IOException {
+    // DEBUG
+    void printAST() {
+        for (CSourceFile file : cSourceFiles) {
+            System.out.println("* " + file.getFileName());
+            for (CMethodImplementation impl : file.getMethodDefinitions()) {
+                System.out.println("  method impl: " + impl.getName());
+                for (CMethodImplementation invok : impl.getMethodInvokations()) {
+                    if (invok.getSourceFile().getFileName().equals(file.getFileName())) {
+                        System.out.println("     -> " + invok.getName());
+                    }
+                    else {
+                        System.out.println("     -> (" + invok.getSourceFile().getFileName() + ") " + invok.getName());
+                    }
+                }
+                System.out.println("");
+            }
+            System.out.println("");
+        }
+    }
+
+    void savePlantUmlContent() throws IOException {
         printVerbose("Save PlantUML Content.");
         Files.writeString(this.outputPath, this.plantUmlContent, StandardCharsets.UTF_8);
     }
 
-    void createPlantUmlContent() {
+    void createPlantUmlContent(CMethodImplementation startMethod) {
         printVerbose("Create PlantUML Content.");
         StringBuilder plantUmlContent = new StringBuilder();
         plantUmlContent.append("@startuml"); plantUmlContent.append(System.lineSeparator());
         plantUmlContent.append("autoactivate on"); plantUmlContent.append(System.lineSeparator());
         plantUmlContent.append("actor Invoker"); plantUmlContent.append(System.lineSeparator());
-        createPlantUmlContentMethod(plantUmlContent, "Invoker", this.startMethod);
+        createPlantUmlContentMethod(plantUmlContent, "Invoker", startMethod, 0);
         plantUmlContent.append("@enduml"); plantUmlContent.append(System.lineSeparator());
         this.plantUmlContent = plantUmlContent.toString();
     }
 
-    void createPlantUmlContentMethod(StringBuilder plantUmlContent, String source, CMethodImplementation cMethodImplementation) {
-        plantUmlContent.append(source + " -> " + cMethodImplementation.getSourceFile().getFileName() + " ++ : " +
-                cMethodImplementation.getName()); plantUmlContent.append(System.lineSeparator());
-        for (CMethodImplementation invokedMethod : cMethodImplementation.getMethodInvokations()) {
-            createPlantUmlContentMethod(plantUmlContent, cMethodImplementation.getSourceFile().getFileName(), invokedMethod);
+    String getPlantUmlContent() {
+        return this.plantUmlContent;
+    }
+
+    void createPlantUmlContentMethod(StringBuilder plantUmlContent, String source,
+                                     CMethodImplementation cMethodImplementation, int nrOfInvokationsInSameSourcefile) {
+        String invokeUml = source + " -> " + cMethodImplementation.getSourceFile().getFileName() + " ++ : " +
+                cMethodImplementation.getName();
+        printVerbose(invokeUml);
+        cMethodImplementation.incTouch();
+        if (source.equals(cMethodImplementation.getSourceFile().getFileName())) {
+            nrOfInvokationsInSameSourcefile++;
+        }
+        plantUmlContent.append(invokeUml); plantUmlContent.append(System.lineSeparator());
+        if (cMethodImplementation.getTouch() < 2 && nrOfInvokationsInSameSourcefile < 2) {
+            for (CMethodImplementation invokedMethod : cMethodImplementation.getMethodInvokations()) {
+                createPlantUmlContentMethod(plantUmlContent, cMethodImplementation.getSourceFile().getFileName(),
+                        invokedMethod, nrOfInvokationsInSameSourcefile);
+            }
         }
         plantUmlContent.append(cMethodImplementation.getSourceFile().getFileName() + " --> " + source); plantUmlContent.append(System.lineSeparator());
+        cMethodImplementation.decTouch();
+        printVerbose(cMethodImplementation.getSourceFile().getFileName() + " --> " + source);
     }
 
     void weaveCodeTogether(Collection<CSourceFile> cHeaderFiles, Collection<CSourceFile> cSourceFiles,

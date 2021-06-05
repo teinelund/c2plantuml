@@ -11,6 +11,7 @@ public class CMethodImplementation {
     private CSourceFile cSourceFile;
     private List<String> methodInvokationNames = new ArrayList<>();
     private List<CMethodImplementation> methodInvokations = new ArrayList<>();
+    private int touch = 0;
 
     public CMethodImplementation(String methodName, CSourceFile cSourceFile) {
         this.name = methodName;
@@ -51,5 +52,17 @@ public class CMethodImplementation {
 
     public List<CMethodImplementation> getMethodInvokations() {
         return Collections.unmodifiableList(methodInvokations);
+    }
+
+    public void incTouch() {
+        touch++;
+    }
+
+    public void decTouch() {
+        touch--;
+    }
+
+    public int getTouch() {
+        return touch;
     }
 }
